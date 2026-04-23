@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../services/auth_service.dart';
 import 'order_details_screen.dart';
+import '../../providers/language_provider.dart';
+import '../../utils/translations.dart';
+import 'package:provider/provider.dart';
 
 class WorkerHomeScreen extends StatefulWidget {
   const WorkerHomeScreen({super.key});
@@ -73,9 +76,13 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
 
     final specialties = List<String>.from(_workerData!['specialties'] ?? []);
 
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final lang = languageProvider.locale.languageCode;
+
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kartoucha - Livreur'),
+        title: Text(t('title', lang)),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),

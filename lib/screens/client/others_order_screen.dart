@@ -81,7 +81,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance.collection('orders').add({
+            await FirebaseFirestore.instance.collection('orders').add({
         'type': 'others',
         'clientId': user!.uid,
         'clientPhone': _phoneController.text.trim(),
@@ -93,6 +93,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen> {
           widget.position!.latitude,
           widget.position!.longitude,
         ),
+        // ⚠️ NO assignedWorkerId here
       });
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

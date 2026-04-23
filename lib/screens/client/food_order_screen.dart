@@ -76,12 +76,13 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
         'clientId': user!.uid,
         'clientPhone': _phoneController.text.trim(),
         'orderDetails': _orderController.text.trim(),
-        'status': 'pending', // admin approval required
+        'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
         'location': GeoPoint(
           widget.position!.latitude,
           widget.position!.longitude,
         ),
+        // ❌ DO NOT INCLUDE 'assignedWorkerId' HERE AT ALL
       });
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

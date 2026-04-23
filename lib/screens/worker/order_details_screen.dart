@@ -54,7 +54,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         transaction.update(
           FirebaseFirestore.instance.collection('orders').doc(widget.orderId),
-          {'status': 'completed', 'completedAt': FieldValue.serverTimestamp()},
+          {'status': 'completed', 'completedAt': FieldValue.serverTimestamp(), 'assignedWorkerId': FieldValue.delete()},
         );
         transaction.update(
           FirebaseFirestore.instance.collection('workers').doc(workerDocId),

@@ -55,14 +55,18 @@ class _UberOrderScreenState extends State<UberOrderScreen> {
     setState(() => _isLoading = true);
     try {
       final user = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance.collection('orders').add({
+            await FirebaseFirestore.instance.collection('orders').add({
         'type': 'uber',
         'clientId': user!.uid,
         'clientPhone': _phoneController.text.trim(),
         'destination': _destinationController.text.trim(),
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
-        'location': GeoPoint(widget.position!.latitude, widget.position!.longitude),
+        'location': GeoPoint(
+          widget.position!.latitude,
+          widget.position!.longitude,
+        ),
+        // ⚠️ NO assignedWorkerId here
       });
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

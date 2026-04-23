@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Icon(Icons.delivery_dining, size: 80, color: Colors.red),
                 const SizedBox(height: 20),
                 Text(
-                  t('app_name', lang),
+                  t('title', lang),
                   style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 40),

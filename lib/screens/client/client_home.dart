@@ -292,7 +292,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                            FoodOrderScreen(position: freshPosition),
+                            UberOrderScreen(position: freshPosition),
                       ),
                     );
                   }
@@ -316,7 +316,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                            FoodOrderScreen(position: freshPosition),
+                            ShopOrderScreen(position: freshPosition),
                       ),
                     );
                   }
@@ -340,7 +340,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                            FoodOrderScreen(position: freshPosition),
+                            TransportOrderScreen(position: freshPosition),
                       ),
                     );
                   }
@@ -364,7 +364,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                            FoodOrderScreen(position: freshPosition),
+                            OthersOrderScreen(position: freshPosition),
                       ),
                     );
                   }

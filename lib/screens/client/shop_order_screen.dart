@@ -1,4 +1,3 @@
-// Similar to food, but with an extra 'shop' field
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,18 +21,37 @@ class _ShopOrderScreenState extends State<ShopOrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Commande Shop')),
-      body: Padding(
+      appBar: AppBar(title: const Text('Commande Shop')),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: 'Téléphone')),
-              TextFormField(controller: _shopController, decoration: InputDecoration(labelText: 'Magasin spécifique')),
-              TextFormField(controller: _orderController, maxLines: 3, decoration: InputDecoration(labelText: 'Liste de courses')),
-              SizedBox(height: 24),
-              ElevatedButton(onPressed: _submitOrder, child: Text('Confirmer')),
+              TextFormField(
+                controller: _phoneController,
+                decoration: const InputDecoration(labelText: 'Téléphone'),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _shopController,
+                decoration: const InputDecoration(
+                  labelText: 'Magasin spécifique',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _orderController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Liste de courses',
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _submitOrder,
+                child: const Text('Confirmer'),
+              ),
             ],
           ),
         ),
@@ -42,6 +60,40 @@ class _ShopOrderScreenState extends State<ShopOrderScreen> {
   }
 
   Future<void> _submitOrder() async {
-    // similar submission logic, include 'shop' field
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      await FirebaseFirestore.instance.collection('orders').add({
+        'type': 'shop',
+        'clientId': user!.uid,
+        'clientPhone': _phoneController.text.trim(),
+        'shop': _shopController.text.trim(),
+        'orderDetails': _orderController.text.trim(),
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'location': GeoPoint(
+          widget.position!.latitude,
+          widget.position!.longitude,
+        ),
+        // ⚠️ NO assignedWorkerId here
+      });
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Commande envoyée, en attente de validation'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 }
