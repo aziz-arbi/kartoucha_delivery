@@ -2,11 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import '../../services/auth_service.dart';
-import 'order_details_screen.dart';
+import 'package:provider/provider.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/translations.dart';
-import 'package:provider/provider.dart';
+import '../../services/auth_service.dart';
+import 'order_details_screen.dart';
 
 class WorkerHomeScreen extends StatefulWidget {
   const WorkerHomeScreen({super.key});
@@ -79,44 +79,106 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final lang = languageProvider.locale.languageCode;
 
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(t('title', lang)),
+        title: Text(t('worker_title', lang)),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            child: Row(
-              children: [
-                Text(_isOnline ? 'En ligne' : 'Hors ligne'),
-                Switch(
-                  value: _isOnline,
-                  onChanged: (_) => _toggleOnlineStatus(),
-                  activeColor: Colors.green,
-                ),
-              ],
+          // Settings icon → opens end drawer
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => AuthService().signOut(),
           ),
         ],
       ),
+      endDrawer: _buildSettingsDrawer(context, lang, languageProvider),
       body: _isOnline
           ? _buildOrdersList(specialties)
-          : const Center(
+          : Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.power_settings_new, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('Vous êtes hors ligne', style: TextStyle(fontSize: 20)),
-                  SizedBox(height: 8),
-                  Text('Activez le bouton pour recevoir des commandes'),
+                  const SizedBox(height: 16),
+                  Text(
+                    t('you_are_offline', lang),
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(t('activate_button', lang)),
                 ],
               ),
             ),
+    );
+  }
+
+  // ------ Worker's settings drawer ------
+  Drawer _buildSettingsDrawer(
+    BuildContext context,
+    String lang,
+    LanguageProvider languageProvider,
+  ) {
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.6,
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Icon(Icons.person, size: 60, color: Colors.red.shade300),
+            const SizedBox(height: 12),
+            Text(
+              t('settings', lang),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 30),
+            // Language switcher
+            ListTile(
+              leading: const Icon(Icons.language),
+              title: Text(t('change_language', lang)),
+              trailing: DropdownButton<String>(
+                value: languageProvider.locale.languageCode,
+                underline: const SizedBox(),
+                items: const [
+                  DropdownMenuItem(value: 'fr', child: Text('Français')),
+                  DropdownMenuItem(value: 'en', child: Text('English')),
+                  DropdownMenuItem(value: 'ar', child: Text('Tounsi')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    languageProvider.setLanguage(value);
+                  }
+                },
+              ),
+            ),
+            // Online / Offline toggle
+            SwitchListTile(
+              secondary: Icon(
+                _isOnline ? Icons.toggle_on : Icons.toggle_off,
+                color: _isOnline ? Colors.green : Colors.grey,
+              ),
+              title: Text(
+                _isOnline
+                    ? t('worker_status_online', lang)
+                    : t('worker_status_offline', lang),
+              ),
+              value: _isOnline,
+              onChanged: (_) => _toggleOnlineStatus(),
+            ),
+            const Spacer(),
+            // Logout
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: Text(t('logout', lang)),
+              onTap: () {
+                Navigator.pop(context);
+                AuthService().signOut();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
     );
   }
 
@@ -135,7 +197,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     query = query.where('assignedWorkerId', isNull: true);
     query = query.orderBy('createdAt', descending: true);
 
-    debugPrint('📡 Query: orders where status==approved, type in $specialties, assignedWorkerId==null, orderBy createdAt desc');
+    debugPrint(
+      '📡 Query: orders where status==approved, type in $specialties, assignedWorkerId==null, orderBy createdAt desc',
+    );
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -222,7 +286,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   Future<void> _acceptOrder(String orderId) async {
     try {
       await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
+        final orderRef = FirebaseFirestore.instance
+            .collection('orders')
+            .doc(orderId);
         final orderSnap = await transaction.get(orderRef);
 
         if (!orderSnap.exists) throw 'Commande introuvable';
@@ -252,9 +318,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
       }
     }
   }
@@ -280,6 +346,9 @@ class _OrderCard extends StatelessWidget {
     final createdAt = order['createdAt'] != null
         ? (order['createdAt'] as Timestamp).toDate()
         : null;
+
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final lang = languageProvider.locale.languageCode;
 
     IconData typeIcon;
     Color typeColor;
@@ -318,7 +387,10 @@ class _OrderCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   type.toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const Spacer(),
                 if (createdAt != null)
@@ -338,7 +410,7 @@ class _OrderCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onAccept,
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: const Text('Accepter la commande'),
+                child: Text(t('accept_order', lang)),
               ),
             ),
           ],

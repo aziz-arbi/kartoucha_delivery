@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
+import '../../utils/translations.dart';
 import '../../services/auth_service.dart';
 import 'food_order_screen.dart';
 import 'uber_order_screen.dart';
@@ -8,9 +11,6 @@ import 'shop_order_screen.dart';
 import 'transport_order_screen.dart';
 import 'others_order_screen.dart';
 import 'offers_screen.dart';
-import 'package:provider/provider.dart';
-import '../../providers/language_provider.dart';
-import '../../utils/translations.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -19,7 +19,8 @@ class ClientHomeScreen extends StatefulWidget {
   State<ClientHomeScreen> createState() => _ClientHomeScreenState();
 }
 
-class _ClientHomeScreenState extends State<ClientHomeScreen> with WidgetsBindingObserver {
+class _ClientHomeScreenState extends State<ClientHomeScreen>
+    with WidgetsBindingObserver {
   int _selectedIndex = 0;
   Position? _currentPosition;
   bool _locationChecked = false;
@@ -37,7 +38,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> with WidgetsBinding
     super.dispose();
   }
 
-  // Detect when app resumes (e.g., after returning from settings)
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && !_locationChecked) {
@@ -46,33 +46,27 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> with WidgetsBinding
   }
 
   Future<void> _checkLocationPermission() async {
-    // 1. Check if location services are enabled
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       _showLocationServiceDialog();
       return;
     }
 
-    // 2. Check permission status
     LocationPermission permission = await Geolocator.checkPermission();
 
     if (permission == LocationPermission.denied) {
-      // Request permission (system popup will appear)
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // User denied once – we can ask again (system popup will show next time)
         _showLocationDeniedDialog(isPermanent: false);
         return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      // User denied permanently – must go to settings
       _showLocationDeniedDialog(isPermanent: true);
       return;
     }
 
-    // 3. Permission granted – get position
     try {
       Position position = await Geolocator.getCurrentPosition();
       setState(() {
@@ -80,7 +74,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> with WidgetsBinding
         _locationChecked = true;
       });
     } catch (e) {
-      // Could not get position (e.g., poor GPS signal)
       _showLocationErrorDialog();
     }
   }
@@ -91,7 +84,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> with WidgetsBinding
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: const Text('Activer la localisation'),
-        content: const Text('Veuillez activer la localisation dans les paramètres de votre téléphone.'),
+        content: const Text(
+          'Veuillez activer la localisation dans les paramètres de votre téléphone.',
+        ),
         actions: [
           TextButton(
             onPressed: () async {
@@ -115,9 +110,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> with WidgetsBinding
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: const Text('Localisation requise'),
-        content: Text(isPermanent
-            ? 'Permission de localisation refusée définitivement.\nVeuillez l\'activer dans les paramètres.'
-            : 'La localisation est nécessaire pour utiliser l\'application.'),
+        content: Text(
+          isPermanent
+              ? 'Permission de localisation refusée définitivement.\nVeuillez l\'activer dans les paramètres.'
+              : 'La localisation est nécessaire pour utiliser l\'application.',
+        ),
         actions: [
           if (isPermanent)
             TextButton(
@@ -150,7 +147,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> with WidgetsBinding
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: const Text('Erreur de localisation'),
-        content: const Text('Impossible d\'obtenir votre position. Vérifiez votre connexion GPS.'),
+        content: const Text(
+          'Impossible d\'obtenir votre position. Vérifiez votre connexion GPS.',
+        ),
         actions: [
           TextButton(
             onPressed: () async {
@@ -171,42 +170,103 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     if (!_locationChecked) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final screens = [
       OrderCategoriesScreen(position: _currentPosition),
       const OffersScreen(),
     ];
-    
-    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
+
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final lang = languageProvider.locale.languageCode;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kartoucha Delivery'),
+        title: Text(t('app_name', lang)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => AuthService().signOut(),
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
           ),
         ],
       ),
+      endDrawer: _buildSettingsDrawer(context, lang, languageProvider),
       body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Commander'),
-          BottomNavigationBarItem(icon: Icon(Icons.local_offer), label: 'Offres'),
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home),
+            label: t('order', lang),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.local_offer),
+            label: t('offers', lang),
+          ),
         ],
+      ),
+    );
+  }
+
+  Drawer _buildSettingsDrawer(
+    BuildContext context,
+    String lang,
+    LanguageProvider languageProvider,
+  ) {
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.6,
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Icon(Icons.person, size: 60, color: Colors.red.shade300),
+            const SizedBox(height: 12),
+            Text(
+              t('settings', lang),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 30),
+            // Language switcher
+            ListTile(
+              leading: const Icon(Icons.language),
+              title: Text(t('change_language', lang)),
+              trailing: DropdownButton<String>(
+                value: languageProvider.locale.languageCode,
+                underline: const SizedBox(),
+                items: const [
+                  DropdownMenuItem(value: 'fr', child: Text('Français')),
+                  DropdownMenuItem(value: 'en', child: Text('English')),
+                  DropdownMenuItem(value: 'ar', child: Text('Tounsi')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    languageProvider.setLanguage(value);
+                  }
+                },
+              ),
+            ),
+            const Spacer(),
+            // Logout
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: Text(t('logout', lang)),
+              onTap: () {
+                Navigator.pop(context);
+                AuthService().signOut();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
 }
 
-// Keep OrderCategoriesScreen and _CategoryCard unchanged from previous version
 class OrderCategoriesScreen extends StatelessWidget {
   final Position? position;
   const OrderCategoriesScreen({super.key, this.position});
@@ -237,7 +297,10 @@ class OrderCategoriesScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       '$online livreur(s) en ligne',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -258,18 +321,19 @@ class OrderCategoriesScreen extends StatelessWidget {
                 icon: Icons.restaurant,
                 color: Colors.orange,
                 onTap: () async {
-                  // Fetch fresh location before ordering
                   Position? freshPosition;
                   try {
                     freshPosition = await Geolocator.getCurrentPosition();
                   } catch (e) {
-                    // Fallback to cached position
                     freshPosition = position;
                   }
                   if (context.mounted) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => FoodOrderScreen(position: freshPosition)),
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            FoodOrderScreen(position: freshPosition),
+                      ),
                     );
                   }
                 },
@@ -279,12 +343,10 @@ class OrderCategoriesScreen extends StatelessWidget {
                 icon: Icons.local_taxi,
                 color: Colors.blue,
                 onTap: () async {
-                  // Fetch fresh location before ordering
                   Position? freshPosition;
                   try {
                     freshPosition = await Geolocator.getCurrentPosition();
                   } catch (e) {
-                    // Fallback to cached position
                     freshPosition = position;
                   }
                   if (context.mounted) {
@@ -303,12 +365,10 @@ class OrderCategoriesScreen extends StatelessWidget {
                 icon: Icons.shopping_cart,
                 color: Colors.purple,
                 onTap: () async {
-                  // Fetch fresh location before ordering
                   Position? freshPosition;
                   try {
                     freshPosition = await Geolocator.getCurrentPosition();
                   } catch (e) {
-                    // Fallback to cached position
                     freshPosition = position;
                   }
                   if (context.mounted) {
@@ -327,12 +387,10 @@ class OrderCategoriesScreen extends StatelessWidget {
                 icon: Icons.local_shipping,
                 color: Colors.brown,
                 onTap: () async {
-                  // Fetch fresh location before ordering
                   Position? freshPosition;
                   try {
                     freshPosition = await Geolocator.getCurrentPosition();
                   } catch (e) {
-                    // Fallback to cached position
                     freshPosition = position;
                   }
                   if (context.mounted) {
@@ -351,12 +409,10 @@ class OrderCategoriesScreen extends StatelessWidget {
                 icon: Icons.more_horiz,
                 color: Colors.teal,
                 onTap: () async {
-                  // Fetch fresh location before ordering
                   Position? freshPosition;
                   try {
                     freshPosition = await Geolocator.getCurrentPosition();
                   } catch (e) {
-                    // Fallback to cached position
                     freshPosition = position;
                   }
                   if (context.mounted) {

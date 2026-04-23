@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../providers/language_provider.dart';
+import '../../utils/translations.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   final String orderId;
@@ -35,7 +38,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       final geo = data['location'] as GeoPoint?;
       setState(() {
         _order = data;
-        _clientLocation = geo != null ? LatLng(geo.latitude, geo.longitude) : null;
+        _clientLocation = geo != null
+            ? LatLng(geo.latitude, geo.longitude)
+            : null;
         _isLoading = false;
       });
     }
@@ -47,14 +52,21 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       final user = FirebaseAuth.instance.currentUser;
       final workerDoc = await FirebaseFirestore.instance
           .collection('workers')
-          .where('phone', isEqualTo: user!.email?.replaceAll('@kartoucha.com', ''))
+          .where(
+            'phone',
+            isEqualTo: user!.email?.replaceAll('@kartoucha.com', ''),
+          )
           .get();
       final workerDocId = workerDoc.docs.first.id;
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         transaction.update(
           FirebaseFirestore.instance.collection('orders').doc(widget.orderId),
-          {'status': 'completed', 'completedAt': FieldValue.serverTimestamp(), 'assignedWorkerId': FieldValue.delete()},
+          {
+            'status': 'completed',
+            'completedAt': FieldValue.serverTimestamp(),
+            'assignedWorkerId': FieldValue.delete(),
+          },
         );
         transaction.update(
           FirebaseFirestore.instance.collection('workers').doc(workerDocId),
@@ -62,14 +74,69 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         );
       });
 
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${t('error', _lang())}: $e')));
+      }
     } finally {
-      setState(() => _isFinishing = false);
+      if (mounted) setState(() => _isFinishing = false);
     }
+  }
+
+  Future<void> _releaseOrder() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final workerDoc = await FirebaseFirestore.instance
+          .collection('workers')
+          .where(
+            'phone',
+            isEqualTo: user!.email?.replaceAll('@kartoucha.com', ''),
+          )
+          .get();
+      final workerDocId = workerDoc.docs.first.id;
+
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        transaction.update(
+          FirebaseFirestore.instance.collection('orders').doc(widget.orderId),
+          {'status': 'approved', 'assignedWorkerId': FieldValue.delete()},
+        );
+        transaction.update(
+          FirebaseFirestore.instance.collection('workers').doc(workerDocId),
+          {'currentOrderId': null},
+        );
+      });
+    } catch (e) {
+      debugPrint('Error releasing order: $e');
+    }
+  }
+
+  Future<bool> _onWillPop() async {
+    final lang = _lang();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t('quit_without_finishing', lang)),
+        content: Text(t('quit_release_message', lang)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t('stay', lang)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t('leave_and_release', lang)),
+          ),
+        ],
+      ),
+    );
+    if (result == true) {
+      await _releaseOrder();
+      return true;
+    }
+    return false;
   }
 
   Future<void> _openMaps() async {
@@ -91,107 +158,165 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     }
   }
 
+  String _lang() {
+    return Provider.of<LanguageProvider>(
+      context,
+      listen: false,
+    ).locale.languageCode;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
+
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text('Détails commande')),
-        body: Center(child: CircularProgressIndicator()),
+        appBar: AppBar(title: Text(t('order_details', lang))),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: Text('Commande #${widget.orderId.substring(0, 6)}')),
-      body: Column(
-        children: [
-          if (_clientLocation != null)
-            SizedBox(
-              height: 250,
-              child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: _clientLocation!,
-                  initialZoom: 15.0,
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.yourcompany.kartoucha',
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: _clientLocation!,
-                        child: Icon(Icons.location_pin, color: Colors.red, size: 40),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildDetailRow('Type', _order!['type']),
-                  _buildDetailRow('Téléphone', _order!['clientPhone']),
-                  if (_order!.containsKey('orderDetails'))
-                    _buildDetailRow('Commande', _order!['orderDetails']),
-                  if (_order!.containsKey('destination'))
-                    _buildDetailRow('Destination', _order!['destination']),
-                  if (_order!.containsKey('shop'))
-                    _buildDetailRow('Magasin', _order!['shop']),
-                  if (_order!.containsKey('whatToTransport'))
-                    _buildDetailRow('À transporter', _order!['whatToTransport']),
-                  if (_order!.containsKey('whatIsIt'))
-                    _buildDetailRow('Description', _order!['whatIsIt']),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _openMaps,
-                        icon: Icon(Icons.map),
-                        label: Text('Itinéraire'),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: _callClient,
-                        icon: Icon(Icons.phone),
-                        label: Text('Appeler'),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 30),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isFinishing ? null : _finishOrder,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: _isFinishing
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : Text('TERMINER LA COMMANDE', style: TextStyle(fontSize: 18)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('${t('order', lang)} #${widget.orderId.substring(0, 6)}'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              final shouldPop = await _onWillPop();
+              if (shouldPop && mounted) {
+                Navigator.of(context).pop();
+              }
+            },
           ),
-        ],
+        ),
+        body: Column(
+          children: [
+            if (_clientLocation != null)
+              SizedBox(
+                height: 250,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: _clientLocation!,
+                    initialZoom: 15.0,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.yourcompany.kartoucha',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: _clientLocation!,
+                          child: const Icon(
+                            Icons.location_pin,
+                            color: Colors.red,
+                            size: 40,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow(t('type', lang), _order!['type']),
+                    _buildDetailRow(t('phone', lang), _order!['clientPhone']),
+                    if (_order!.containsKey('orderDetails'))
+                      _buildDetailRow(
+                        t('order_details_label', lang),
+                        _order!['orderDetails'],
+                      ),
+                    if (_order!.containsKey('destination'))
+                      _buildDetailRow(
+                        t('destination', lang),
+                        _order!['destination'],
+                      ),
+                    if (_order!.containsKey('shop'))
+                      _buildDetailRow(t('shop', lang), _order!['shop']),
+                    if (_order!.containsKey('whatToTransport'))
+                      _buildDetailRow(
+                        t('what_to_transport', lang),
+                        _order!['whatToTransport'],
+                      ),
+                    if (_order!.containsKey('whatIsIt'))
+                      _buildDetailRow(
+                        t('description', lang),
+                        _order!['whatIsIt'],
+                      ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _openMaps,
+                          icon: const Icon(Icons.map),
+                          label: Text(t('navigation', lang)),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _callClient,
+                          icon: const Icon(Icons.phone),
+                          label: Text(t('call', lang)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isFinishing ? null : _finishOrder,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: _isFinishing
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : Text(
+                                t('complete_order', lang),
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 100, child: Text(label, style: TextStyle(fontWeight: FontWeight.bold))),
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
           Expanded(child: Text(value)),
         ],
       ),
