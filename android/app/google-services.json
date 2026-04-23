@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "169633956142",
+    "project_id": "kartoucha-delivery",
+    "storage_bucket": "kartoucha-delivery.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:169633956142:android:a24d6d44528b1bc5ecbabf",
+        "android_client_info": {
+          "package_name": "com.yourcompany.kartoucha"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZEjQGle8uohSH4mKTjDS5gpp8j8GanRs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:169633956142:android:613b60f12a60f89fecbabf",
+        "android_client_info": {
+          "package_name": "com.yourcompany.kartoucha.kartoucha_delivery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZEjQGle8uohSH4mKTjDS5gpp8j8GanRs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
