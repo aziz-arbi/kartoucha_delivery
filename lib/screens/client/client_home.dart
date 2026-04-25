@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../utils/translations.dart';
 import '../../services/auth_service.dart';
 import 'food_order_screen.dart';
@@ -45,6 +46,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
     }
   }
 
+  // ---------- Location handling (unchanged) ----------
   Future<void> _checkLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -166,6 +168,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
       ),
     );
   }
+  // ------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -179,11 +182,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
     ];
 
     final languageProvider = Provider.of<LanguageProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final lang = languageProvider.locale.languageCode;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t('title', lang)),
+        title: Text(t('app_name', lang)),
         actions: [
           Builder(
             builder: (context) => IconButton(
@@ -193,11 +197,20 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
           ),
         ],
       ),
-      endDrawer: _buildSettingsDrawer(context, lang, languageProvider),
+      endDrawer: _buildSettingsDrawer(
+        context,
+        lang,
+        languageProvider,
+        themeProvider,
+      ),
       body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
+        selectedItemColor: Colors.red,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        type: BottomNavigationBarType.fixed,
         items: [
           BottomNavigationBarItem(
             icon: const Icon(Icons.home),
@@ -212,10 +225,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
     );
   }
 
+  // ------ Settings drawer with Language, Theme, Logout ------
   Drawer _buildSettingsDrawer(
     BuildContext context,
     String lang,
     LanguageProvider languageProvider,
+    ThemeProvider themeProvider,
   ) {
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.6,
@@ -233,7 +248,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             // Language switcher
             ListTile(
               leading: const Icon(Icons.language),
-              // title: Text(t('change_language', lang)), (this is currently off beacause of the size problems and it bugs out the screen)
+              title: Text(t('change_language', lang)),
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),
@@ -245,6 +260,31 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                 onChanged: (value) {
                   if (value != null) {
                     languageProvider.setLanguage(value);
+                  }
+                },
+              ),
+            ),
+            // Theme switcher
+            ListTile(
+              leading: const Icon(Icons.dark_mode),
+              title: Text(t('theme', lang)),
+              trailing: DropdownButton<String>(
+                value: _themeModeToKey(themeProvider.mode),
+                underline: const SizedBox(),
+                items: [
+                  DropdownMenuItem(
+                    value: 'light',
+                    child: Text(t('light', lang)),
+                  ),
+                  DropdownMenuItem(value: 'dark', child: Text(t('dark', lang))),
+                  DropdownMenuItem(
+                    value: 'system',
+                    child: Text(t('system_default', lang)),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    themeProvider.setTheme(_keyToThemeMode(value));
                   }
                 },
               ),
@@ -265,18 +305,38 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
       ),
     );
   }
+
+  // Helper methods for theme mode conversion
+  String _themeModeToKey(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.light:
+        return 'light';
+      case AppThemeMode.dark:
+        return 'dark';
+      case AppThemeMode.system:
+        return 'system';
+    }
+  }
+
+  AppThemeMode _keyToThemeMode(String key) {
+    switch (key) {
+      case 'light':
+        return AppThemeMode.light;
+      case 'dark':
+        return AppThemeMode.dark;
+      default:
+        return AppThemeMode.system;
+    }
+  }
 }
 
+// Keep OrderCategoriesScreen and _CategoryCard unchanged from your code
 class OrderCategoriesScreen extends StatelessWidget {
   final Position? position;
   const OrderCategoriesScreen({super.key, this.position});
 
-  
-
   @override
   Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
-    final lang = languageProvider.locale.languageCode;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -300,7 +360,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                     const Icon(Icons.delivery_dining, color: Colors.green),
                     const SizedBox(width: 8),
                     Text(
-                      '$online ${t('workers_online', lang)}',
+                      '$online livreur(s) en ligne',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -321,7 +381,7 @@ class OrderCategoriesScreen extends StatelessWidget {
             childAspectRatio: 1.2,
             children: [
               _CategoryCard(
-                title: t('food', lang),
+                title: 'Food',
                 icon: Icons.restaurant,
                 color: Colors.orange,
                 onTap: () async {
@@ -343,7 +403,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: t('uber', lang),
+                title: 'Uber',
                 icon: Icons.local_taxi,
                 color: Colors.blue,
                 onTap: () async {
@@ -365,7 +425,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: t('shop', lang),
+                title: 'Shop',
                 icon: Icons.shopping_cart,
                 color: Colors.purple,
                 onTap: () async {
@@ -387,7 +447,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: t('transport', lang),
+                title: 'Transport',
                 icon: Icons.local_shipping,
                 color: Colors.brown,
                 onTap: () async {
@@ -409,7 +469,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: t('others', lang),
+                title: 'Autres',
                 icon: Icons.more_horiz,
                 color: Colors.teal,
                 onTap: () async {

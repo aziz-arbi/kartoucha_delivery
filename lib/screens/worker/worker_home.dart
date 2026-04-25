@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../utils/translations.dart';
 import '../../services/auth_service.dart';
 import 'order_details_screen.dart';
@@ -77,6 +78,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     final specialties = List<String>.from(_workerData!['specialties'] ?? []);
 
     final languageProvider = Provider.of<LanguageProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final lang = languageProvider.locale.languageCode;
 
     return Scaffold(
@@ -92,7 +94,12 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
           ),
         ],
       ),
-      endDrawer: _buildSettingsDrawer(context, lang, languageProvider),
+      endDrawer: _buildSettingsDrawer(
+        context,
+        lang,
+        languageProvider,
+        themeProvider,
+      ),
       body: _isOnline
           ? _buildOrdersList(specialties)
           : Center(
@@ -118,6 +125,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     BuildContext context,
     String lang,
     LanguageProvider languageProvider,
+    ThemeProvider themeProvider,
   ) {
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.6,
@@ -135,7 +143,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             // Language switcher
             ListTile(
               leading: const Icon(Icons.language),
-              // title: Text(t('change_language', lang)), (this is currently off beacause of the size problems and it bugs out the screen)
+              title: Text(t('change_language', lang)),
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),
@@ -147,6 +155,31 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 onChanged: (value) {
                   if (value != null) {
                     languageProvider.setLanguage(value);
+                  }
+                },
+              ),
+            ),
+            // Theme switcher
+            ListTile(
+              leading: const Icon(Icons.dark_mode),
+              title: Text(t('theme', lang)),
+              trailing: DropdownButton<String>(
+                value: _themeModeToKey(themeProvider.mode),
+                underline: const SizedBox(),
+                items: [
+                  DropdownMenuItem(
+                    value: 'light',
+                    child: Text(t('light', lang)),
+                  ),
+                  DropdownMenuItem(value: 'dark', child: Text(t('dark', lang))),
+                  DropdownMenuItem(
+                    value: 'system',
+                    child: Text(t('system_default', lang)),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    themeProvider.setTheme(_keyToThemeMode(value));
                   }
                 },
               ),
@@ -180,6 +213,29 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         ),
       ),
     );
+  }
+
+  // Helper methods for theme mode conversion
+  String _themeModeToKey(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.light:
+        return 'light';
+      case AppThemeMode.dark:
+        return 'dark';
+      case AppThemeMode.system:
+        return 'system';
+    }
+  }
+
+  AppThemeMode _keyToThemeMode(String key) {
+    switch (key) {
+      case 'light':
+        return AppThemeMode.light;
+      case 'dark':
+        return AppThemeMode.dark;
+      default:
+        return AppThemeMode.system;
+    }
   }
 
   Widget _buildOrdersList(List<String> specialties) {
