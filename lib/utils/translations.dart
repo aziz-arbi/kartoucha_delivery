@@ -1,4 +1,16 @@
 Map<String, Map<String, String>> translations = {
+  'zone_not_covered': {
+    'fr': 'Désolé, cette zone n\'est pas encore couverte.',
+    'en': 'Sorry, this area is not covered yet.',
+    'ar': 'عذراً، هذه المنطقة غير مغطاة بعد.',
+  },
+  'order_details_label': {'fr': 'Votre commande', 'en': 'Your order', 'ar': 'طلبك'},
+  'confirm_order': {'fr': 'Confirmer la commande', 'en': 'Confirm order', 'ar': 'تأكيد الطلب'},
+  'order_sent_pending': {'fr': 'Commande envoyée, en attente de validation', 'en': 'Order sent, pending approval', 'ar': 'تم إرسال الطلب، في انتظار الموافقة'},
+  'service_closed_message': {
+  'fr': 'Nous sommes actuellement fermés. Veuillez réessayer plus tard.',
+  'en': 'We are currently closed. Please try again later.',
+  'ar': 'نحن مغلقون حالياً. يرجى المحاولة لاحقاً.',},
   'worker_status_online': {'fr': 'En ligne', 'en': 'Online', 'ar': 'متصل'},
   'workers_online': {'fr': 'livreur(s) en ligne','en': 'worker(s) online','ar': 'عامل(ين) متصل',},
   'settings': {'fr': 'Paramètres', 'en': 'Settings', 'ar': 'الإعدادات'},
@@ -20,7 +32,6 @@ Map<String, Map<String, String>> translations = {
   'signup_button': {'fr': 'S\'inscrire', 'en': 'Sign Up', 'ar': 'إنشاء حساب'},
   'error': {'fr': 'Erreur', 'en': 'Error', 'ar': 'خطأ'},
   'order_details': {'fr': 'Détails commande','en': 'Order Details','ar': 'تفاصيل الطلب',},
-  'order_details_label': {'fr': 'Commande', 'en': 'Order', 'ar': 'الطلب'},
   'destination': {'fr': 'Destination', 'en': 'Destination', 'ar': 'الوجهة'},
   'what_to_transport': {'fr': 'À transporter','en': 'What to transport','ar': 'ما سيتم نقله',},
   'description': {'fr': 'Description', 'en': 'Description', 'ar': 'الوصف'},

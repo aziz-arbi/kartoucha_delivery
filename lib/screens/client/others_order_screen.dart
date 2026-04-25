@@ -2,6 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../utils/operating_hours_utils.dart';
+import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
+import '../../utils/translations.dart';
+import '../../utils/zone_utils.dart';
 
 class OthersOrderScreen extends StatefulWidget {
   final Position? position;
@@ -78,6 +83,33 @@ class _OthersOrderScreenState extends State<OthersOrderScreen> {
   Future<void> _submitOrder() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
+
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
+
+    final closed = await OperatingHoursUtils.isServiceClosed();
+    if (closed) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t('service_closed_message', lang))),
+        );
+      }
+      return;
+    }
+
+    if (widget.position != null) {
+      final inZone = await ZoneUtils.isLocationInAnyActiveZone(
+        widget.position!.latitude,
+        widget.position!.longitude,
+      );
+      if (!inZone) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(t('zone_not_covered', lang))));
+        }
+        return;
+      }
+    }
 
     try {
       final user = FirebaseAuth.instance.currentUser;

@@ -168,12 +168,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
         await doc.reference.delete();
 
         try {
-          final token = await FirebaseMessaging.instance.getToken();
-          final currentUser = FirebaseAuth.instance.currentUser;
-          if (token != null && currentUser != null) {
+          String? token = await FirebaseMessaging.instance.getToken();
+          if (token != null && FirebaseAuth.instance.currentUser != null) {
             await FirebaseFirestore.instance
                 .collection('users')
-                .doc(currentUser.uid)
+                .doc(FirebaseAuth.instance.currentUser!.uid)
                 .update({'fcmToken': token});
           }
         } catch (e) {

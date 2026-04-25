@@ -2,6 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
+import '../../utils/translations.dart';
+import '../../utils/operating_hours_utils.dart';
+import '../../utils/zone_utils.dart';
 
 class FoodOrderScreen extends StatefulWidget {
   final Position? position;
@@ -19,9 +24,11 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
+
     return Scaffold(
-      appBar: AppBar(title: Text('Commande Food')),
-      body: Padding(
+      appBar: AppBar(title: Text(t('food', lang))),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -31,22 +38,22 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: 'Numéro de téléphone',
-                  border: OutlineInputBorder(),
+                  labelText: t('phone', lang),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (v) => v!.isEmpty ? 'Requis' : null,
+                validator: (v) => v!.isEmpty ? t('required_field', lang) : null,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _orderController,
                 maxLines: 5,
                 decoration: InputDecoration(
-                  labelText: 'Votre commande',
-                  border: OutlineInputBorder(),
+                  labelText: t('order_details_label', lang),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (v) => v!.isEmpty ? 'Requis' : null,
+                validator: (v) => v!.isEmpty ? t('required_field', lang) : null,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -54,8 +61,11 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
                   onPressed: _isLoading ? null : _submitOrder,
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   child: _isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text('Confirmer la commande'),
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          t('confirm_order', lang),
+                          style: const TextStyle(fontSize: 18),
+                        ),
                 ),
               ),
             ],
@@ -67,6 +77,34 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
 
   Future<void> _submitOrder() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // 1️⃣ Check operating hours
+    final closed = await OperatingHoursUtils.isServiceClosed();
+    if (closed) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t('service_closed_message', lang))),
+        );
+      }
+      return;
+    }
+
+    // 2️⃣ Check delivery zone (if a position is available)
+    if (widget.position != null) {
+      final inZone = await ZoneUtils.isLocationInAnyActiveZone(
+        widget.position!.latitude,
+        widget.position!.longitude,
+      );
+      if (!inZone) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(t('zone_not_covered', lang))));
+        }
+        return;
+      }
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -82,18 +120,27 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
           widget.position!.latitude,
           widget.position!.longitude,
         ),
-        // ❌ DO NOT INCLUDE 'assignedWorkerId' HERE AT ALL
+        // ⚠️ NO assignedWorkerId here
       });
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Commande envoyée, en attente de validation')),
-      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(t('order_sent_pending', lang))));
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${t('error', lang)}: $e')));
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
+
+  // Helper to get current language code outside the build method
+  String get lang =>
+      Provider.of<LanguageProvider>(context, listen: false).locale.languageCode;
 }
