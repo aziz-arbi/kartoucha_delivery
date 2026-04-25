@@ -183,7 +183,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t('app_name', lang)),
+        title: Text(t('title', lang)),
         actions: [
           Builder(
             builder: (context) => IconButton(
@@ -233,7 +233,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             // Language switcher
             ListTile(
               leading: const Icon(Icons.language),
-              title: Text(t('change_language', lang)),
+              // title: Text(t('change_language', lang)), (this is currently off beacause of the size problems and it bugs out the screen)
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),
@@ -271,8 +271,12 @@ class OrderCategoriesScreen extends StatelessWidget {
   final Position? position;
   const OrderCategoriesScreen({super.key, this.position});
 
+  
+
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final lang = languageProvider.locale.languageCode;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -296,7 +300,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                     const Icon(Icons.delivery_dining, color: Colors.green),
                     const SizedBox(width: 8),
                     Text(
-                      '$online livreur(s) en ligne',
+                      '$online ${t('workers_online', lang)}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -317,7 +321,7 @@ class OrderCategoriesScreen extends StatelessWidget {
             childAspectRatio: 1.2,
             children: [
               _CategoryCard(
-                title: 'Food',
+                title: t('food', lang),
                 icon: Icons.restaurant,
                 color: Colors.orange,
                 onTap: () async {
@@ -339,7 +343,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: 'Uber',
+                title: t('uber', lang),
                 icon: Icons.local_taxi,
                 color: Colors.blue,
                 onTap: () async {
@@ -361,7 +365,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: 'Shop',
+                title: t('shop', lang),
                 icon: Icons.shopping_cart,
                 color: Colors.purple,
                 onTap: () async {
@@ -383,7 +387,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: 'Transport',
+                title: t('transport', lang),
                 icon: Icons.local_shipping,
                 color: Colors.brown,
                 onTap: () async {
@@ -405,7 +409,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: 'Autres',
+                title: t('others', lang),
                 icon: Icons.more_horiz,
                 color: Colors.teal,
                 onTap: () async {

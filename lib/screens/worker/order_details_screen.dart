@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -21,6 +25,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   LatLng? _clientLocation;
   bool _isLoading = true;
   bool _isFinishing = false;
+
+  // ---- Worker tracking & route ----
+  StreamSubscription<Position>? _positionStream;
+  LatLng? _workerPosition;
+  List<LatLng> _routePoints = [];
+  Timer? _refreshTimer;
+  MapController? _mapController;
 
   @override
   void initState() {
@@ -43,9 +54,91 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             : null;
         _isLoading = false;
       });
+      // Start tracking worker location after order is loaded
+      _startTracking();
     }
   }
 
+  // ---------- Worker tracking & routing ----------
+  void _startTracking() async {
+    LocationPermission perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+      if (perm != LocationPermission.denied &&
+          perm != LocationPermission.deniedForever) {
+        // ok
+      } else {
+        return;
+      }
+    }
+
+    _positionStream =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 0,
+            timeLimit: Duration(minutes: 1),
+          ),
+        ).listen((Position pos) {
+          setState(() {
+            _workerPosition = LatLng(pos.latitude, pos.longitude);
+          });
+          _fetchRoute();
+        });
+
+    // Also refresh route every 60s even if worker didn't move
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      _fetchRoute();
+    });
+
+    // Fetch route once immediately
+    _fetchRoute();
+  }
+
+  Future<void> _fetchRoute() async {
+    if (_workerPosition == null || _clientLocation == null) return;
+
+    final start = _workerPosition!;
+    final end = _clientLocation!;
+
+    final url =
+        'https://router.project-osrm.org/route/v1/driving/'
+        '${start.longitude},${start.latitude};'
+        '${end.longitude},${end.latitude}'
+        '?overview=full&geometries=geojson';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final route = data['routes'][0];
+        final geometry = route['geometry']['coordinates'] as List;
+
+        final points = geometry.map((coord) {
+          return LatLng(coord[1].toDouble(), coord[0].toDouble());
+        }).toList();
+
+        setState(() {
+          _routePoints = points;
+        });
+
+        // Fit map bounds to show both worker and client
+        if (_mapController != null) {
+          final bounds = LatLngBounds.fromPoints([
+            _workerPosition!,
+            _clientLocation!,
+          ]);
+          _mapController!.fitCamera(
+            CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50)),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Route fetch error: $e');
+    }
+  }
+
+  // ---------- Finish & Release ----------
   Future<void> _finishOrder() async {
     setState(() => _isFinishing = true);
     try {
@@ -74,6 +167,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         );
       });
 
+      _stopTracking();
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
@@ -108,11 +202,25 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           {'currentOrderId': null},
         );
       });
+      _stopTracking();
     } catch (e) {
-      debugPrint('Error releasing order: $e');
+      debugPrint('Release order error: $e');
     }
   }
 
+  void _stopTracking() {
+    _positionStream?.cancel();
+    _refreshTimer?.cancel();
+  }
+
+  @override
+  void dispose() {
+    _stopTracking();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  // ---------- Back navigation with confirmation ----------
   Future<bool> _onWillPop() async {
     final lang = _lang();
     final result = await showDialog<bool>(
@@ -139,6 +247,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     return false;
   }
 
+  // ---------- Open maps & call ----------
   Future<void> _openMaps() async {
     if (_clientLocation == null) return;
     final url =
@@ -165,6 +274,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     ).locale.languageCode;
   }
 
+  // ---------- UI ----------
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
@@ -200,6 +310,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         ),
         body: Column(
           children: [
+            // ----- Map -----
             if (_clientLocation != null)
               SizedBox(
                 height: 250,
@@ -208,27 +319,55 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     initialCenter: _clientLocation!,
                     initialZoom: 15.0,
                   ),
+                  mapController: _mapController,
                   children: [
                     TileLayer(
                       urlTemplate:
                           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.yourcompany.kartoucha',
                     ),
+                    // Client marker (red)
                     MarkerLayer(
                       markers: [
                         Marker(
                           point: _clientLocation!,
                           child: const Icon(
-                            Icons.location_pin,
+                            Icons.location_on,
                             color: Colors.red,
                             size: 40,
                           ),
                         ),
                       ],
                     ),
+                    // Worker marker (blue) – only if position available
+                    if (_workerPosition != null)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _workerPosition!,
+                            child: const Icon(
+                              Icons.my_location,
+                              color: Colors.blue,
+                              size: 30,
+                            ),
+                          ),
+                        ],
+                      ),
+                    // Route polyline
+                    if (_routePoints.isNotEmpty)
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: _routePoints,
+                            color: Colors.blue,
+                            strokeWidth: 4,
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
+            // ----- Order details -----
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),

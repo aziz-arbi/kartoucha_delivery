@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Kartoucha needs your location to show delivery addresses.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Kartoucha needs your location even when in background.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

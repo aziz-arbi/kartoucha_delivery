@@ -135,7 +135,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             // Language switcher
             ListTile(
               leading: const Icon(Icons.language),
-              title: Text(t('change_language', lang)),
+              // title: Text(t('change_language', lang)), (this is currently off beacause of the size problems and it bugs out the screen)
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),

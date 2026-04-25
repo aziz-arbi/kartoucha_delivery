@@ -1,5 +1,6 @@
 Map<String, Map<String, String>> translations = {
   'worker_status_online': {'fr': 'En ligne', 'en': 'Online', 'ar': 'متصل'},
+  'workers_online': {'fr': 'livreur(s) en ligne','en': 'worker(s) online','ar': 'عامل(ين) متصل',},
   'settings': {'fr': 'Paramètres', 'en': 'Settings', 'ar': 'الإعدادات'},
   'change_language': {'fr': 'Changer la langue','en': 'Change Language','ar': 'تغيير اللغة',},
   'worker_status_offline': {'fr': 'Hors ligne', 'en': 'Offline', 'ar': 'غير متصل'},
