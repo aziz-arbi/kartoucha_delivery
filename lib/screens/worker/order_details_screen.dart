@@ -250,10 +250,32 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   // ---------- Open maps & call ----------
   Future<void> _openMaps() async {
     if (_clientLocation == null) return;
-    final url =
-        'https://www.openstreetmap.org/directions?engine=graphhopper_car&route=;${_clientLocation!.latitude},${_clientLocation!.longitude}';
-    if (await canLaunch(url)) {
-      await launch(url);
+
+    final url = Uri.parse(
+      'https://www.openstreetmap.org/directions?engine=graphhopper_car'
+      '&route=;${_clientLocation!.latitude},${_clientLocation!.longitude}',
+    );
+
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Impossible d\'ouvrir la carte. Vérifiez votre connexion.',
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      }
     }
   }
 
@@ -313,7 +335,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             // ----- Map -----
             if (_clientLocation != null)
               SizedBox(
-                height: 250,
+                height: 400,
                 child: FlutterMap(
                   options: MapOptions(
                     initialCenter: _clientLocation!,

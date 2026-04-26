@@ -25,8 +25,9 @@ class _OthersOrderScreenState extends State<OthersOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
     return Scaffold(
-      appBar: AppBar(title: Text('Autre commande')),
+      appBar: AppBar(title: Text(t('others', lang))),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -46,7 +47,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen> {
               TextFormField(
                 controller: _fromWhereController,
                 decoration: InputDecoration(
-                  labelText: 'Depuis où / De quel endroit',
+                  labelText: t('from_where', lang),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => v!.isEmpty ? 'Requis' : null,
@@ -56,7 +57,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen> {
                 controller: _whatIsItController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: 'Qu\'est-ce que c\'est ?',
+                  labelText: t('what_is_this', lang),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => v!.isEmpty ? 'Requis' : null,
@@ -70,7 +71,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   child: _isLoading
                       ? CircularProgressIndicator(color: Colors.white)
-                      : Text('Confirmer la commande'),
+                      : Text(t('confirm_order', lang)),
                 ),
               ),
             ],

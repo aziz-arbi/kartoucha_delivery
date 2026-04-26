@@ -1,4 +1,34 @@
 Map<String, Map<String, String>> translations = {
+  'what_to_transport': {
+    'fr': 'Ce qui sera transporté',
+    'en': 'What will be transported',
+    'ar': 'ما الذي سيتم نقله؟',
+  },
+  'destination': {
+    'fr': 'destination',
+    'en': 'destination',
+    'ar': 'وجهة',
+  },
+  'shopping_list': {
+    'fr': 'Liste de courses',
+    'en': 'Shopping List',
+    'ar': 'قائمة التسوق',
+  },
+  'specific_shop': {
+    'fr': 'Magasin spécifique',
+    'en': 'Specific store',
+    'ar': 'متجر محدد'
+  },
+  'what_is_this': {
+    'fr': 'Qu\'est-ce que c\'est ?',
+    'en': 'What is this ?',
+    'ar': 'ما هذا ؟',
+  },
+  'from_where': {
+    'fr': 'Depuis où / De quel endroit',
+    'en': 'From where / From what place',
+    'ar': 'من أين؟'
+  },
   'zone_not_covered': {
     'fr': 'Désolé, cette zone n\'est pas encore couverte.',
     'en': 'Sorry, this area is not covered yet.',

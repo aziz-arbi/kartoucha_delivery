@@ -25,8 +25,9 @@ class _ShopOrderScreenState extends State<ShopOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
     return Scaffold(
-      appBar: AppBar(title: const Text('Commande Shop')),
+      appBar: AppBar(title: Text(t('shop', lang))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -35,27 +36,27 @@ class _ShopOrderScreenState extends State<ShopOrderScreen> {
             children: [
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Téléphone'),
+                decoration: InputDecoration(labelText: t('phone', lang)),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _shopController,
-                decoration: const InputDecoration(
-                  labelText: 'Magasin spécifique',
+                decoration: InputDecoration(
+                  labelText: t('specific_shop',lang),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _orderController,
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Liste de courses',
+                decoration:  InputDecoration(
+                  labelText: t('shopping_list', lang),
                 ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : _submitOrder,
-                child: const Text('Confirmer'),
+                child: Text(t('confirm_order', lang)),
               ),
             ],
           ),

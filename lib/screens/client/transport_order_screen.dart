@@ -25,8 +25,9 @@ class _TransportOrderScreenState extends State<TransportOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
     return Scaffold(
-      appBar: AppBar(title: Text('Commande Transport')),
+      appBar: AppBar(title: Text(t('transport', lang))),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -37,7 +38,7 @@ class _TransportOrderScreenState extends State<TransportOrderScreen> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: 'Numéro de téléphone',
+                  labelText: t('phone', lang),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => v!.isEmpty ? 'Requis' : null,
@@ -46,7 +47,7 @@ class _TransportOrderScreenState extends State<TransportOrderScreen> {
               TextFormField(
                 controller: _destinationController,
                 decoration: InputDecoration(
-                  labelText: 'Point B (destination)',
+                  labelText: t('destination', lang),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => v!.isEmpty ? 'Requis' : null,
@@ -56,7 +57,7 @@ class _TransportOrderScreenState extends State<TransportOrderScreen> {
                 controller: _whatToTransportController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: 'Ce qui sera transporté',
+                  labelText: t('what_to_transport', lang),
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => v!.isEmpty ? 'Requis' : null,
@@ -70,7 +71,7 @@ class _TransportOrderScreenState extends State<TransportOrderScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   child: _isLoading
                       ? CircularProgressIndicator(color: Colors.white)
-                      : Text('Confirmer la commande'),
+                      : Text(t('confirm_order', lang)),
                 ),
               ),
             ],

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+
 class OffersScreen extends StatelessWidget {
   const OffersScreen({super.key});
 

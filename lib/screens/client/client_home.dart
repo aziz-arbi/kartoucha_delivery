@@ -187,7 +187,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t('app_name', lang)),
+        title: Text(t('title', lang)),
         actions: [
           Builder(
             builder: (context) => IconButton(
@@ -248,7 +248,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             // Language switcher
             ListTile(
               leading: const Icon(Icons.language),
-              title: Text(t('change_language', lang)),
+              title: Text(' '),
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),
@@ -267,7 +267,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             // Theme switcher
             ListTile(
               leading: const Icon(Icons.dark_mode),
-              title: Text(t('theme', lang)),
+              title: Text((' ')),
               trailing: DropdownButton<String>(
                 value: _themeModeToKey(themeProvider.mode),
                 underline: const SizedBox(),
@@ -337,6 +337,8 @@ class OrderCategoriesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final lang = languageProvider.locale.languageCode;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -348,22 +350,27 @@ class OrderCategoriesScreen extends StatelessWidget {
                 .snapshots(),
             builder: (context, snapshot) {
               int online = snapshot.data?.docs.length ?? 0;
+              final isDark = Theme.of(context).brightness == Brightness.dark;
               return Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
+                  color: isDark ? Colors.green.shade900 : Colors.green.shade50,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.delivery_dining, color: Colors.green),
-                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.delivery_dining,
+                      color: isDark ? Colors.greenAccent : Colors.green,
+                    ),
+                    SizedBox(width: 8),
                     Text(
-                      '$online livreur(s) en ligne',
-                      style: const TextStyle(
+                      '$online ${t('workers_online', lang)}',
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
                   ],
@@ -381,7 +388,7 @@ class OrderCategoriesScreen extends StatelessWidget {
             childAspectRatio: 1.2,
             children: [
               _CategoryCard(
-                title: 'Food',
+                title: t('food', lang),
                 icon: Icons.restaurant,
                 color: Colors.orange,
                 onTap: () async {
@@ -403,7 +410,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: 'Uber',
+                title: t('uber', lang),
                 icon: Icons.local_taxi,
                 color: Colors.blue,
                 onTap: () async {
@@ -425,7 +432,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: 'Shop',
+                title: t('shop', lang),
                 icon: Icons.shopping_cart,
                 color: Colors.purple,
                 onTap: () async {
@@ -447,7 +454,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: 'Transport',
+                title: t('transport', lang),
                 icon: Icons.local_shipping,
                 color: Colors.brown,
                 onTap: () async {
@@ -469,7 +476,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                 },
               ),
               _CategoryCard(
-                title: 'Autres',
+                title: t('others', lang),
                 icon: Icons.more_horiz,
                 color: Colors.teal,
                 onTap: () async {

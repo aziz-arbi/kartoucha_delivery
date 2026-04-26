@@ -24,8 +24,9 @@ class _UberOrderScreenState extends State<UberOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
     return Scaffold(
-      appBar: AppBar(title: Text('Commande Uber')),
+      appBar: AppBar(title: Text(t('uber', lang))),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -34,19 +35,19 @@ class _UberOrderScreenState extends State<UberOrderScreen> {
             children: [
               TextFormField(
                 controller: _phoneController,
-                decoration: InputDecoration(labelText: 'Téléphone'),
+                decoration: InputDecoration(labelText: t('phone', lang)),
                 validator: (v) => v!.isEmpty ? 'Requis' : null,
               ),
               SizedBox(height: 16),
               TextFormField(
                 controller: _destinationController,
-                decoration: InputDecoration(labelText: 'Point B (destination)'),
+                decoration: InputDecoration(labelText: t('destination', lang)),
                 validator: (v) => v!.isEmpty ? 'Requis' : null,
               ),
               SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : _submitOrder,
-                child: Text('Confirmer'),
+                child: Text(t('confirm_order', lang)),
               ),
             ],
           ),
