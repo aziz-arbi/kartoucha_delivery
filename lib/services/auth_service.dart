@@ -32,11 +32,10 @@ class AuthService {
     required String phone,
     required String password,
   }) async {
-    // Store pending user in Firestore for admin approval
     await _firestore.collection('pending_users').add({
       'name': name,
       'phone': phone,
-      'password': password, // In production, you should hash this on server
+      'password': password,
       'createdAt': FieldValue.serverTimestamp(),
       'approved': false,
     });

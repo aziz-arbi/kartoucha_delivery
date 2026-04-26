@@ -52,6 +52,10 @@ dependencies:
   
   # State management (simple and beginner‑friendly)
   provider: ^6.1.2
+
+  local_auth: ^2.3.0
+  vibration: ^2.0.0               # simple vibration
+  shared_preferences: ^2.3.5
   
   # For making HTTP requests (if needed)
   http: ^1.2.2
@@ -59,9 +63,6 @@ dependencies:
   
   # For phone number formatting
   intl: ^0.19.0
-  
-  # For shared preferences (save language, etc.)
-  shared_preferences: ^2.3.2
   
   # For icons
   cupertino_icons: ^1.0.8

@@ -37,8 +37,9 @@ class _ShopOrderScreenState extends State<ShopOrderScreen> {
               TextFormField(
                 controller: _phoneController,
                 decoration: InputDecoration(labelText: t('phone', lang)),
+                validator: (v) => v!.isEmpty ? 'Requis' : null,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextFormField(
                 controller: _shopController,
                 decoration: InputDecoration(

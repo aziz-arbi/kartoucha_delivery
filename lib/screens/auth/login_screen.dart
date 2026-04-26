@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/translations.dart';
@@ -21,6 +23,35 @@ class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  final LocalAuthentication _localAuth = LocalAuthentication();
+
+  // Try biometric login
+  Future<void> _tryBiometricLogin() async {
+    final canCheck = await _localAuth.canCheckBiometrics;
+    if (!canCheck) return;
+
+    final isAvailable = await _localAuth.isDeviceSupported();
+    if (!isAvailable) return;
+
+    try {
+      final authenticated = await _localAuth.authenticate(
+        localizedReason: 'Veuillez vous authentifier pour continuer.',
+        options: const AuthenticationOptions(stickyAuth: true),
+      );
+      if (authenticated && mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        final phone = prefs.getString('savedPhone');
+        final password = prefs.getString('savedPassword');
+        if (phone != null && password != null) {
+          _phoneController.text = phone;
+          _passwordController.text = password;
+          await _handleLogin();
+        }
+      }
+    } catch (e) {
+      debugPrint('Erreur biométrique: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,8 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t('title', lang)),
+        title: Text(t('app_name', lang)),
         actions: [
+          // Language switcher (existing)
           PopupMenuButton<String>(
             onSelected: (value) async {
               await languageProvider.setLanguage(value);
@@ -64,10 +96,26 @@ class _LoginScreenState extends State<LoginScreen> {
                 Icon(Icons.delivery_dining, size: 80, color: Colors.red),
                 const SizedBox(height: 20),
                 Text(
-                  t('title', lang),
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  t('app_name', lang),
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 40),
+                // Biometric login button
+                Container(
+                  alignment: Alignment.center,
+                  child: IconButton(
+                    iconSize: 48,
+                    icon: Icon(Icons.fingerprint, color: Colors.red.shade400),
+                    onPressed: _tryBiometricLogin,
+                    tooltip: t('biometric_login', lang),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(t('biometric_hint', lang)),
+                const SizedBox(height: 20),
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
@@ -76,7 +124,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: const Icon(Icons.phone),
                     border: const OutlineInputBorder(),
                   ),
-                  validator: (v) => v!.isEmpty ? t('required_field', lang) : null,
+                  validator: (v) =>
+                      v!.isEmpty ? t('required_field', lang) : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -87,7 +136,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: const Icon(Icons.lock),
                     border: const OutlineInputBorder(),
                   ),
-                  validator: (v) => v!.isEmpty ? t('required_field', lang) : null,
+                  validator: (v) =>
+                      v!.isEmpty ? t('required_field', lang) : null,
                 ),
                 const SizedBox(height: 8),
                 Align(
@@ -98,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         SnackBar(content: Text(t('contact_admin', lang))),
                       );
                     },
-                    child: Text(t('forgot', lang)),
+                    child: Text(t('forgot_password', lang)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -107,10 +157,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(t('login', lang), style: const TextStyle(fontSize: 18)),
+                        : Text(
+                            t('login', lang),
+                            style: const TextStyle(fontSize: 18),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -121,7 +176,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       MaterialPageRoute(builder: (_) => const SignupScreen()),
                     );
                   },
-                  child: Text(t('signup', lang), style: const TextStyle(fontSize: 16)),
+                  child: Text(
+                    t('signup', lang),
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ],
             ),
@@ -133,10 +191,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _getLanguageDisplay(String code) {
     switch (code) {
-      case 'fr': return 'Français';
-      case 'en': return 'English';
-      case 'ar': return 'Tounsi';
-      default: return 'Français';
+      case 'fr':
+        return 'Français';
+      case 'en':
+        return 'English';
+      case 'ar':
+        return 'Tounsi';
+      default:
+        return 'Français';
     }
   }
 
@@ -149,14 +211,19 @@ class _LoginScreenState extends State<LoginScreen> {
         _phoneController.text.trim(),
         _passwordController.text,
       );
+
       if (user != null) {
+        // Save credentials for future biometric login
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('savedPhone', _phoneController.text.trim());
+        await prefs.setString('savedPassword', _passwordController.text);
         // Navigation is handled by AuthWrapper
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

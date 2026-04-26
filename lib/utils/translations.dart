@@ -1,4 +1,25 @@
 Map<String, Map<String, String>> translations = {
+  'biometric_login': {
+    'fr': 'Connexion biométrique',
+    'en': 'Biometric login',
+    'ar': 'تسجيل الدخول البيومتري',
+  },
+  'biometric_hint': {
+    'fr': 'Utilisez votre empreinte ou visage pour vous connecter',
+    'en': 'Use your fingerprint or face to log in',
+    'ar': 'استخدم بصمتك أو وجهك لتسجيل الدخول',
+  },
+  'take_face_photo': {
+    'fr': 'Prendre une photo',
+    'en': 'Take face photo',
+    'ar': 'التقاط صورة',
+  },
+  'retake_photo': {'fr': 'Reprendre', 'en': 'Retake', 'ar': 'إعادة التقاط'},
+  'photo_required': {
+    'fr': 'Veuillez prendre une photo de votre visage.',
+    'en': 'Please take a photo of your face.',
+    'ar': 'يرجى التقاط صورة لوجهك.',
+  },
   'what_to_transport': {
     'fr': 'Ce qui sera transporté',
     'en': 'What will be transported',
