@@ -3,12 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
+import 'package:vibration/vibration.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../utils/translations.dart';
 import '../../services/auth_service.dart';
 import 'order_details_screen.dart';
-import 'worker_order_history.dart'; // new import
+import 'worker_order_history.dart';
 
 class WorkerHomeScreen extends StatefulWidget {
   const WorkerHomeScreen({super.key});
@@ -21,6 +22,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   String? _workerId;
   Map<String, dynamic>? _workerData;
   bool _isOnline = false;
+
+  // 🔁 Stores the previous order count to detect new orders → vibration
+  int _previousOrderCount = 0;
 
   @override
   void initState() {
@@ -45,7 +49,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         _isOnline = data['status'] == 'online';
       });
 
-      // Save FCM token for this worker
       try {
         String? token = await FirebaseMessaging.instance.getToken();
         if (token != null && _workerId != null) {
@@ -154,9 +157,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                   DropdownMenuItem(value: 'ar', child: Text('Tounsi')),
                 ],
                 onChanged: (value) {
-                  if (value != null) {
-                    languageProvider.setLanguage(value);
-                  }
+                  if (value != null) languageProvider.setLanguage(value);
                 },
               ),
             ),
@@ -179,9 +180,8 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                   ),
                 ],
                 onChanged: (value) {
-                  if (value != null) {
+                  if (value != null)
                     themeProvider.setTheme(_keyToThemeMode(value));
-                  }
                 },
               ),
             ),
@@ -199,12 +199,12 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
               value: _isOnline,
               onChanged: (_) => _toggleOnlineStatus(),
             ),
-            // 🆕 Worker Order History
+            // Worker Order History
             ListTile(
               leading: const Icon(Icons.history),
               title: Text(t('history', lang)),
               onTap: () {
-                Navigator.pop(context); // close drawer
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const WorkerOrderHistory()),
@@ -260,16 +260,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
       );
     }
 
-    Query query = FirebaseFirestore.instance.collection('orders');
-    query = query.where('status', isEqualTo: 'approved');
-    query = query.where('type', whereIn: specialties);
-    query = query.where('assignedWorkerId', isNull: true);
-    query = query.orderBy('createdAt', descending: true);
-
-    debugPrint(
-      '📡 Query: orders where status==approved, type in $specialties, assignedWorkerId==null, orderBy createdAt desc',
-    );
-
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('orders')
@@ -278,16 +268,11 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        debugPrint(
-          '📡 Stream update: connectionState=${snapshot.connectionState}, hasData=${snapshot.hasData}, hasError=${snapshot.hasError}',
-        );
-
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
-          debugPrint('🔥 Stream error: ${snapshot.error}');
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -297,8 +282,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                   const Icon(Icons.error, size: 50, color: Colors.red),
                   const SizedBox(height: 16),
                   Text('Erreur: ${snapshot.error}'),
-                  const SizedBox(height: 8),
-                  const Text('Vérifiez la console pour plus de détails.'),
                 ],
               ),
             ),
@@ -306,8 +289,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         }
 
         final allOrders = snapshot.data?.docs ?? [];
-
-        // Filter out orders that already have an assignedWorkerId
         final filteredOrders = allOrders.where((doc) {
           final data = doc.data() as Map<String, dynamic>?;
           if (data == null) return false;
@@ -315,9 +296,12 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
           return assigned == null || assigned == '';
         }).toList();
 
-        debugPrint(
-          '📦 All approved orders of matching types: ${allOrders.length}, after null-check filter: ${filteredOrders.length}',
-        );
+        // 🟢 Vibration when a brand new order appears
+        if (filteredOrders.isNotEmpty && _previousOrderCount == 0) {
+          Vibration.vibrate(duration: 200); // short buzz
+        }
+        // Update previous count for next rebuild
+        _previousOrderCount = filteredOrders.length;
 
         if (filteredOrders.isEmpty) {
           return const Center(
@@ -361,9 +345,8 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         final orderSnap = await transaction.get(orderRef);
 
         if (!orderSnap.exists) throw 'Commande introuvable';
-        if (orderSnap.data()?['status'] != 'approved') {
+        if (orderSnap.data()?['status'] != 'approved')
           throw 'Commande déjà prise';
-        }
 
         transaction.update(orderRef, {
           'status': 'assigned',
@@ -416,8 +399,7 @@ class _OrderCard extends StatelessWidget {
         ? (order['createdAt'] as Timestamp).toDate()
         : null;
 
-    final languageProvider = Provider.of<LanguageProvider>(context);
-    final lang = languageProvider.locale.languageCode;
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
 
     IconData typeIcon;
     Color typeColor;
