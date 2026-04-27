@@ -1,4 +1,20 @@
 Map<String, Map<String, String>> translations = {
+  'order_sent_cancel_hint': {
+    'fr': 'Commande envoyée. Vous pouvez annuler dans la minute.',
+    'en': 'Order sent. You can cancel within 1 minute.',
+    'ar': 'تم إرسال الطلب. يمكنك الإلغاء خلال دقيقة واحدة.',
+  },
+  'cancel': {'fr': 'Annuler', 'en': 'Cancel', 'ar': 'إلغاء'},
+  'cancel_too_late': {
+    'fr': 'Délai d\'annulation dépassé.',
+    'en': 'Cancellation period has expired.',
+    'ar': 'انتهت فترة الإلغاء.',
+  },
+  'order_cancelled': {
+    'fr': 'Commande annulée.',
+    'en': 'Order cancelled.',
+    'ar': 'تم إلغاء الطلب.',
+  },
   'biometric_login': {
     'fr': 'Connexion biométrique',
     'en': 'Biometric login',

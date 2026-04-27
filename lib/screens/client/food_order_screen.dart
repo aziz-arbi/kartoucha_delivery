@@ -89,7 +89,7 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
       return;
     }
 
-    // 2️⃣ Check delivery zone (if a position is available)
+    // 2️⃣ Check delivery zone
     if (widget.position != null) {
       final inZone = await ZoneUtils.isLocationInAnyActiveZone(
         widget.position!.latitude,
@@ -109,25 +109,39 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance.collection('orders').add({
-        'type': 'food',
-        'clientId': user!.uid,
-        'clientPhone': _phoneController.text.trim(),
-        'orderDetails': _orderController.text.trim(),
-        'status': 'pending',
-        'createdAt': FieldValue.serverTimestamp(),
-        'location': GeoPoint(
-          widget.position!.latitude,
-          widget.position!.longitude,
-        ),
-        // ⚠️ NO assignedWorkerId here
-      });
+      final orderRef = await FirebaseFirestore.instance
+          .collection('orders')
+          .add({
+            'type': 'food',
+            'clientId': user!.uid,
+            'clientPhone': _phoneController.text.trim(),
+            'orderDetails': _orderController.text.trim(),
+            'status': 'pending',
+            'createdAt': FieldValue.serverTimestamp(),
+            'location': GeoPoint(
+              widget.position!.latitude,
+              widget.position!.longitude,
+            ),
+            // ⚠️ NO assignedWorkerId here
+          });
 
       if (mounted) {
+        // Go back to home
         Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(t('order_sent_pending', lang))));
+
+        // Show cancelable snackbar for 60 seconds
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 60),
+            content: Text(t('order_sent_cancel_hint', lang)),
+            action: SnackBarAction(
+              label: t('cancel', lang),
+              onPressed: () async {
+                await _cancelOrder(orderRef.id);
+              },
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -137,6 +151,62 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Cancels the order if it's still pending and less than 60 seconds old.
+  Future<void> _cancelOrder(String orderId) async {
+    try {
+      final orderSnap = await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(orderId)
+          .get();
+
+      if (!orderSnap.exists) return;
+
+      final data = orderSnap.data()!;
+      final status = data['status'] as String?;
+      if (status != 'pending') {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(t('cancel_too_late', lang))));
+        }
+        return;
+      }
+
+      // Check time difference
+      final createdAt = data['createdAt'] as Timestamp?;
+      if (createdAt != null) {
+        final diff = DateTime.now()
+            .toUtc()
+            .difference(createdAt.toDate())
+            .inSeconds;
+        if (diff > 60) {
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(t('cancel_too_late', lang))));
+          }
+          return;
+        }
+      }
+
+      await FirebaseFirestore.instance.collection('orders').doc(orderId).update(
+        {'status': 'cancelled'},
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(t('order_cancelled', lang))));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${t('error', lang)}: $e')));
+      }
     }
   }
 
