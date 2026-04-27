@@ -1,4 +1,5 @@
 Map<String, Map<String, String>> translations = {
+  'history': {'fr': 'Historique', 'en': 'History', 'ar': 'السجل'},
   'order_sent_cancel_hint': {
     'fr': 'Commande envoyée. Vous pouvez annuler dans la minute.',
     'en': 'Order sent. You can cancel within 1 minute.',

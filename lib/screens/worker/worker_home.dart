@@ -8,6 +8,7 @@ import '../../providers/theme_provider.dart';
 import '../../utils/translations.dart';
 import '../../services/auth_service.dart';
 import 'order_details_screen.dart';
+import 'worker_order_history.dart'; // new import
 
 class WorkerHomeScreen extends StatefulWidget {
   const WorkerHomeScreen({super.key});
@@ -197,6 +198,18 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
               ),
               value: _isOnline,
               onChanged: (_) => _toggleOnlineStatus(),
+            ),
+            // 🆕 Worker Order History
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: Text(t('history', lang)),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const WorkerOrderHistory()),
+                );
+              },
             ),
             const Spacer(),
             // Logout

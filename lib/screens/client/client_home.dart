@@ -12,6 +12,7 @@ import 'shop_order_screen.dart';
 import 'transport_order_screen.dart';
 import 'others_order_screen.dart';
 import 'offers_screen.dart';
+import 'client_order_history.dart'; // new import
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -179,6 +180,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
     final screens = [
       OrderCategoriesScreen(position: _currentPosition),
       const OffersScreen(),
+      const ClientOrderHistory(), // new history screen
     ];
 
     final languageProvider = Provider.of<LanguageProvider>(context);
@@ -220,6 +222,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             icon: const Icon(Icons.local_offer),
             label: t('offers', lang),
           ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.history),
+            label: t('history', lang),
+          ),
         ],
       ),
     );
@@ -248,7 +254,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             // Language switcher
             ListTile(
               leading: const Icon(Icons.language),
-              title: Text(' '),
+              title: Text(t('change_language', lang)),
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),
@@ -267,7 +273,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             // Theme switcher
             ListTile(
               leading: const Icon(Icons.dark_mode),
-              title: Text((' ')),
+              title: Text(t('theme', lang)),
               trailing: DropdownButton<String>(
                 value: _themeModeToKey(themeProvider.mode),
                 underline: const SizedBox(),
