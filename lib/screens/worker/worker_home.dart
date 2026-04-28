@@ -222,7 +222,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
             // Language
             ListTile(
               leading: const Icon(Icons.language, color: Color(0xFFFF5724)),
-              title: Text(t('change_language', lang)),
+              title: Text(' '),
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),
@@ -239,7 +239,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
             // Theme
             ListTile(
               leading: const Icon(Icons.dark_mode, color: Color(0xFFFF8B3D)),
-              title: Text(t('theme', lang)),
+              title: Text(' '),
               trailing: DropdownButton<String>(
                 value: _themeModeToKey(themeProvider.mode),
                 underline: const SizedBox(),

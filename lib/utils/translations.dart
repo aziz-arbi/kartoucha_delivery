@@ -1,4 +1,9 @@
 Map<String, Map<String, String>> translations = {
+  'food_heading': {
+    'fr': 'Qu est-ce que tu veux manger ?',
+    'en': 'What do you want to eat',
+    'ar': 'ماذا تريد أن تأكل؟'
+  },
   'create_account': {
     'fr': 'Créer un compte',
     'en': 'Create an account',

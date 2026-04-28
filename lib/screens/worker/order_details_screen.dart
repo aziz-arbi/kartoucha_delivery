@@ -33,6 +33,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   Timer? _refreshTimer;
   MapController? _mapController;
 
+  // ---- Full screen map toggle ----
+  bool _isFullScreenMap = false;
+
   @override
   void initState() {
     super.initState();
@@ -54,7 +57,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             : null;
         _isLoading = false;
       });
-      // Start tracking worker location after order is loaded
       _startTracking();
     }
   }
@@ -86,12 +88,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           _fetchRoute();
         });
 
-    // Also refresh route every 60s even if worker didn't move
     _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       _fetchRoute();
     });
 
-    // Fetch route once immediately
     _fetchRoute();
   }
 
@@ -122,7 +122,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           _routePoints = points;
         });
 
-        // Fit map bounds to show both worker and client
         if (_mapController != null) {
           final bounds = LatLngBounds.fromPoints([
             _workerPosition!,
@@ -247,38 +246,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     return false;
   }
 
-  // ---------- Open maps & call ----------
-  Future<void> _openMaps() async {
-    if (_clientLocation == null) return;
-
-    final url = Uri.parse(
-      'https://www.openstreetmap.org/directions?engine=graphhopper_car'
-      '&route=;${_clientLocation!.latitude},${_clientLocation!.longitude}',
-    );
-
-    try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Impossible d\'ouvrir la carte. Vérifiez votre connexion.',
-              ),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-      }
-    }
+  // ---------- Toggle full screen map ----------
+  void _openMaps() {
+    setState(() {
+      _isFullScreenMap = true;
+    });
   }
 
+  // ---------- Call client ----------
   Future<void> _callClient() async {
     final phone = _order?['clientPhone'];
     if (phone != null) {
@@ -296,6 +271,52 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     ).locale.languageCode;
   }
 
+  // ---------- Shared map widget ----------
+  Widget _buildMap() {
+    if (_clientLocation == null) return const SizedBox.shrink();
+    return FlutterMap(
+      options: MapOptions(initialCenter: _clientLocation!, initialZoom: 15.0),
+      mapController: _mapController,
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.yourcompany.kartoucha',
+        ),
+        MarkerLayer(
+          markers: [
+            Marker(
+              point: _clientLocation!,
+              child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+            ),
+          ],
+        ),
+        if (_workerPosition != null)
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: _workerPosition!,
+                child: const Icon(
+                  Icons.my_location,
+                  color: Colors.blue,
+                  size: 30,
+                ),
+              ),
+            ],
+          ),
+        if (_routePoints.isNotEmpty)
+          PolylineLayer(
+            polylines: [
+              Polyline(
+                points: _routePoints,
+                color: Colors.blue,
+                strokeWidth: 4,
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
   // ---------- UI ----------
   @override
   Widget build(BuildContext context) {
@@ -308,6 +329,21 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       );
     }
 
+    // Full‑screen map view
+    if (_isFullScreenMap) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(t('navigation', lang)),
+          leading: IconButton(
+            icon: const Icon(Icons.close_fullscreen),
+            onPressed: () => setState(() => _isFullScreenMap = false),
+          ),
+        ),
+        body: _buildMap(),
+      );
+    }
+
+    // Normal split view
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -332,64 +368,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         ),
         body: Column(
           children: [
-            // ----- Map -----
-            if (_clientLocation != null)
-              SizedBox(
-                height: 400,
-                child: FlutterMap(
-                  options: MapOptions(
-                    initialCenter: _clientLocation!,
-                    initialZoom: 15.0,
-                  ),
-                  mapController: _mapController,
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.yourcompany.kartoucha',
-                    ),
-                    // Client marker (red)
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: _clientLocation!,
-                          child: const Icon(
-                            Icons.location_on,
-                            color: Colors.red,
-                            size: 40,
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Worker marker (blue) – only if position available
-                    if (_workerPosition != null)
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: _workerPosition!,
-                            child: const Icon(
-                              Icons.my_location,
-                              color: Colors.blue,
-                              size: 30,
-                            ),
-                          ),
-                        ],
-                      ),
-                    // Route polyline
-                    if (_routePoints.isNotEmpty)
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: _routePoints,
-                            color: Colors.blue,
-                            strokeWidth: 4,
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            // ----- Order details -----
+            // Normal map (small)
+            SizedBox(height: 400, child: _buildMap()),
+            // Order details
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
