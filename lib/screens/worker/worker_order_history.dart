@@ -7,8 +7,6 @@ class WorkerOrderHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Worker userId is not stored directly; we need worker doc id.
-    // We'll fetch the worker doc by phone, then query orders where assignedWorkerId == workerId.
     return FutureBuilder<String?>(
       future: _getWorkerId(),
       builder: (context, snapshot) {
@@ -16,7 +14,9 @@ class WorkerOrderHistory extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         final workerId = snapshot.data;
-        if (workerId == null) return const Center(child: Text('Erreur'));
+        if (workerId == null)
+          return const Center(child: Text('Livreur introuvable'));
+
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('orders')
@@ -27,9 +27,13 @@ class WorkerOrderHistory extends StatelessWidget {
             if (orderSnapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
+            if (orderSnapshot.hasError) {
+              return Center(child: Text('Erreur: ${orderSnapshot.error}'));
+            }
             final orders = orderSnapshot.data?.docs ?? [];
-            if (orders.isEmpty)
+            if (orders.isEmpty) {
               return const Center(child: Text('Aucune commande effectuée.'));
+            }
             return ListView.builder(
               itemCount: orders.length,
               itemBuilder: (context, index) {
@@ -42,7 +46,7 @@ class WorkerOrderHistory extends StatelessWidget {
                   title: Text('$type - $status'),
                   subtitle: date != null
                       ? Text(
-                          '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}',
+                          '${date.day}/${date.month}/${date.year}  ${date.hour}:${date.minute}',
                         )
                       : null,
                 );

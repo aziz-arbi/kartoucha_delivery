@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/translations.dart';
+import '../../utils/phone_validator.dart';
 import '../../services/auth_service.dart';
 import 'verification_screen.dart';
 
@@ -50,7 +51,7 @@ class _SignupScreenState extends State<SignupScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(t('signup', lang)),
-        backgroundColor: const Color(0xFFFF8B3D), // Neon Carrot
+        backgroundColor: const Color(0xFFFF8B3D),
       ),
       body: ScaleTransition(
         scale: _scaleAnimation,
@@ -58,7 +59,7 @@ class _SignupScreenState extends State<SignupScreen>
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Header card
+              // Header card (unchanged from earlier design) ...
               Container(
                 height: 160,
                 width: double.infinity,
@@ -105,7 +106,6 @@ class _SignupScreenState extends State<SignupScreen>
                 ),
               ),
               const SizedBox(height: 24),
-
               // Form card
               Card(
                 shape: RoundedRectangleBorder(
@@ -142,8 +142,10 @@ class _SignupScreenState extends State<SignupScreen>
                               color: Color(0xFFFF5724),
                             ),
                           ),
-                          validator: (v) =>
-                              v!.isEmpty ? t('required_field', lang) : null,
+                          validator: (v) => PhoneValidator.validate(
+                            v,
+                            t('required_field', lang),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         TextFormField(

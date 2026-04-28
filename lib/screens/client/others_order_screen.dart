@@ -7,6 +7,7 @@ import '../../providers/language_provider.dart';
 import '../../utils/translations.dart';
 import '../../utils/operating_hours_utils.dart';
 import '../../utils/zone_utils.dart';
+import '../../utils/phone_validator.dart';
 
 class OthersOrderScreen extends StatefulWidget {
   final Position? position;
@@ -132,8 +133,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
                               color: Color(0xFFFF5724), // Orange
                             ),
                           ),
-                          validator: (v) =>
-                              v!.isEmpty ? t('required_field', lang) : null,
+                          validator: (v) => PhoneValidator.validate(v, t('required_field', lang)),
                         ),
                         const SizedBox(height: 20),
                         TextFormField(

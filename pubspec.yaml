@@ -47,6 +47,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.14.3
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
@@ -57,3 +58,12 @@ flutter:
   # 🔥 Your images are now correctly declared here:
   assets:
     - assets/images/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "icon.jpeg"
+  # optionally remove existing alpha/round icons on Android
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FFFFFF"   # background for Android adaptive icon
+  adaptive_icon_foreground: "icon.jpeg"   # foreground for Android adaptive icon

@@ -20,6 +20,9 @@ class ClientOrderHistory extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
+        if (snapshot.hasError) {
+          return Center(child: Text('Erreur: ${snapshot.error}'));
+        }
         final orders = snapshot.data?.docs ?? [];
         if (orders.isEmpty) {
           return const Center(child: Text('Aucune commande passée.'));
@@ -36,10 +39,9 @@ class ClientOrderHistory extends StatelessWidget {
               title: Text('$type - $status'),
               subtitle: date != null
                   ? Text(
-                      '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}',
+                      '${date.day}/${date.month}/${date.year}  ${date.hour}:${date.minute}',
                     )
                   : null,
-              isThreeLine: true,
             );
           },
         );

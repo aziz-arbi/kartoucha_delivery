@@ -7,6 +7,7 @@ import '../../providers/language_provider.dart';
 import '../../utils/translations.dart';
 import '../../utils/operating_hours_utils.dart';
 import '../../utils/zone_utils.dart';
+import '../../utils/phone_validator.dart';
 
 class FoodOrderScreen extends StatefulWidget {
   final Position? position;
@@ -126,14 +127,17 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
                           keyboardType: TextInputType.phone,
                           decoration: InputDecoration(
                             labelText: t('phone', lang),
-                            prefixIcon: const Icon(
-                              Icons.phone,
-                              color: Color(0xFFFF5724),
-                            ),
+                            prefixIcon: const Icon(Icons.phone, color: Color(0xFFFF5724)),
                           ),
-                          validator: (v) =>
-                              v!.isEmpty ? t('required_field', lang) : null,
+                          validator: (v) => PhoneValidator.validate(v, t('required_field', lang)),
+                              
                         ),
+
+
+
+
+
+                        
                         const SizedBox(height: 20),
                         TextFormField(
                           controller: _orderController,
