@@ -18,18 +18,39 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   final LocalAuthentication _localAuth = LocalAuthentication();
+  late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
 
-  // Try biometric login
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOut,
+    );
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
   Future<void> _tryBiometricLogin() async {
     final canCheck = await _localAuth.canCheckBiometrics;
     if (!canCheck) return;
-
     final isAvailable = await _localAuth.isDeviceSupported();
     if (!isAvailable) return;
 
@@ -59,130 +80,258 @@ class _LoginScreenState extends State<LoginScreen> {
     final lang = languageProvider.locale.languageCode;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t('app_name', lang)),
-        actions: [
-          // Language switcher (existing)
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              await languageProvider.setLanguage(value);
-              setState(() {});
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'fr', child: Text('Français')),
-              const PopupMenuItem(value: 'en', child: Text('English')),
-              const PopupMenuItem(value: 'ar', child: Text('Tounsi')),
-            ],
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Text(_getLanguageDisplay(lang)),
-                  const Icon(Icons.arrow_drop_down),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.delivery_dining, size: 80, color: Colors.red),
-                const SizedBox(height: 20),
-                Text(
-                  t('app_name', lang),
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // ----- Header with gradient -----
+              Container(
+                height: 260,
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFF5724), Color(0xFFFF8B3D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ),
-                const SizedBox(height: 40),
-                // Biometric login button
-                Container(
-                  alignment: Alignment.center,
-                  child: IconButton(
-                    iconSize: 48,
-                    icon: Icon(Icons.fingerprint, color: Colors.red.shade400),
-                    onPressed: _tryBiometricLogin,
-                    tooltip: t('biometric_login', lang),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(40),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(t('biometric_hint', lang)),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: t('phone', lang),
-                    prefixIcon: const Icon(Icons.phone),
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (v) =>
-                      v!.isEmpty ? t('required_field', lang) : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: t('password', lang),
-                    prefixIcon: const Icon(Icons.lock),
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (v) =>
-                      v!.isEmpty ? t('required_field', lang) : null,
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(t('contact_admin', lang))),
-                      );
-                    },
-                    child: Text(t('forgot_password', lang)),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFFF5724),
+                      blurRadius: 20,
+                      offset: Offset(0, 10),
+                      spreadRadius: -5,
                     ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            t('login', lang),
-                            style: const TextStyle(fontSize: 18),
+                  ],
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Language switcher at top right
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: PopupMenuButton<String>(
+                          onSelected: (value) async {
+                            await languageProvider.setLanguage(value);
+                            setState(() {});
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'fr',
+                              child: Text('Français'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'en',
+                              child: Text('English'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'ar',
+                              child: Text('Tounsi'),
+                            ),
+                          ],
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 16, top: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _getLanguageDisplay(lang),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
                           ),
+                        ),
+                      ),
+                      const Spacer(),
+                      // Logo and title
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                        child: const Icon(
+                          Icons.delivery_dining,
+                          size: 60,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        t('title', lang),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SignupScreen()),
-                    );
-                  },
-                  child: Text(
-                    t('signup', lang),
-                    style: const TextStyle(fontSize: 16),
+              ),
+
+              // ----- Form card -----
+              Transform.translate(
+                offset: const Offset(0, -20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Card(
+                    elevation: 8,
+                    shadowColor: const Color(0xFFFF5724).withOpacity(0.15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            // Biometric icon
+                            InkWell(
+                              onTap: _tryBiometricLogin,
+                              borderRadius: BorderRadius.circular(30),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(
+                                    0xFFFF5724,
+                                  ).withOpacity(0.1),
+                                ),
+                                child: const Icon(
+                                  Icons.fingerprint,
+                                  size: 40,
+                                  color: Color(0xFFFF5724),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              t('biometric_hint', lang),
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            TextFormField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: InputDecoration(
+                                labelText: t('phone', lang),
+                                prefixIcon: const Icon(
+                                  Icons.phone,
+                                  color: Color(0xFFFF5724),
+                                ),
+                              ),
+                              validator: (v) =>
+                                  v!.isEmpty ? t('required_field', lang) : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                labelText: t('password', lang),
+                                prefixIcon: const Icon(
+                                  Icons.lock,
+                                  color: Color(0xFFFF8B3D),
+                                ),
+                              ),
+                              validator: (v) =>
+                                  v!.isEmpty ? t('required_field', lang) : null,
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(t('contact_admin', lang)),
+                                    ),
+                                  );
+                                },
+                                child: Text(t('forgot', lang)),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 55,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _handleLogin,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFF5724),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: _isLoading
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white,
+                                      )
+                                    : Text(
+                                        t('login', lang),
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SignupScreen(),
+                                  ),
+                                );
+                              },
+                              child: Text.rich(
+                                TextSpan(
+                                  text: "${t('no_account', lang)} ",
+                                  style: TextStyle(color: Colors.grey.shade600),
+                                  children: [
+                                    TextSpan(
+                                      text: t('signup', lang),
+                                      style: const TextStyle(
+                                        color: Color(0xFFFF5724),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -213,11 +362,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (user != null) {
-        // Save credentials for future biometric login
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('savedPhone', _phoneController.text.trim());
         await prefs.setString('savedPassword', _passwordController.text);
-        // Navigation is handled by AuthWrapper
       }
     } catch (e) {
       if (mounted) {

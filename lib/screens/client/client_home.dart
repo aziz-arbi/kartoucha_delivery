@@ -12,7 +12,7 @@ import 'shop_order_screen.dart';
 import 'transport_order_screen.dart';
 import 'others_order_screen.dart';
 import 'offers_screen.dart';
-import 'client_order_history.dart'; // new import
+import 'client_order_history.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -180,7 +180,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
     final screens = [
       OrderCategoriesScreen(position: _currentPosition),
       const OffersScreen(),
-      const ClientOrderHistory(), // new history screen
+      const ClientOrderHistory(),
     ];
 
     final languageProvider = Provider.of<LanguageProvider>(context);
@@ -209,7 +209,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
-        selectedItemColor: Colors.red,
+        selectedItemColor: const Color(0xFFFF5724), // Orange
         unselectedItemColor: Colors.grey,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         type: BottomNavigationBarType.fixed,
@@ -298,7 +298,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             const Spacer(),
             // Logout
             ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
+              leading: const Icon(
+                Icons.logout,
+                color: const Color(0xFFD33131),
+              ), // Persian Red
               title: Text(t('logout', lang)),
               onTap: () {
                 Navigator.pop(context);
@@ -336,188 +339,148 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
   }
 }
 
-// Keep OrderCategoriesScreen and _CategoryCard unchanged from your code
+// ---------- NEW ORDER CATEGORIES SCREEN ----------
 class OrderCategoriesScreen extends StatelessWidget {
   final Position? position;
   const OrderCategoriesScreen({super.key, this.position});
 
+  // Define categories with your new colors
+  final List<Map<String, dynamic>> categories = const [
+    {
+      'title': 'food',
+      'icon': Icons.restaurant,
+      'color': Color(0xFFFF5724), // Orange
+    },
+    {
+      'title': 'uber',
+      'icon': Icons.local_taxi,
+      'color': Color(0xFFFF8B3D), // Neon Carrot
+    },
+    {
+      'title': 'shop',
+      'icon': Icons.shopping_cart,
+      'color': Color(0xFFFFB84D), // Texas Rose
+    },
+    {
+      'title': 'transport',
+      'icon': Icons.local_shipping,
+      'color': Color(0xFF4A4A4A), // Tundora
+    },
+    {
+      'title': 'others',
+      'icon': Icons.more_horiz,
+      'color': Color(0xFFD33131), // Persian Red
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
-    final lang = languageProvider.locale.languageCode;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('workers')
-                .where('status', isEqualTo: 'online')
-                .snapshots(),
-            builder: (context, snapshot) {
-              int online = snapshot.data?.docs.length ?? 0;
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              return Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.green.shade900 : Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.delivery_dining,
-                      color: isDark ? Colors.greenAccent : Colors.green,
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
+
+    return Column(
+      children: [
+        // Online workers banner
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('workers')
+              .where('status', isEqualTo: 'online')
+              .snapshots(),
+          builder: (context, snapshot) {
+            int online = snapshot.data?.docs.length ?? 0;
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.green.shade900 : Colors.green.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.delivery_dining,
+                    color: isDark ? Colors.greenAccent : Colors.green,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$online ${t('workers_online', lang)}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      '$online ${t('workers_online', lang)}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        // Animated category list
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final cat = categories[index];
+              return _AnimatedCategoryCard(
+                index: index,
+                title: t(cat['title'], lang),
+                icon: cat['icon'],
+                color: cat['color'],
+                onTap: () async {
+                  Position? freshPosition;
+                  try {
+                    freshPosition = await Geolocator.getCurrentPosition();
+                  } catch (_) {
+                    freshPosition = position;
+                  }
+                  if (context.mounted) {
+                    Widget screen;
+                    switch (cat['title']) {
+                      case 'food':
+                        screen = FoodOrderScreen(position: freshPosition);
+                        break;
+                      case 'uber':
+                        screen = UberOrderScreen(position: freshPosition);
+                        break;
+                      case 'shop':
+                        screen = ShopOrderScreen(position: freshPosition);
+                        break;
+                      case 'transport':
+                        screen = TransportOrderScreen(position: freshPosition);
+                        break;
+                      case 'others':
+                        screen = OthersOrderScreen(position: freshPosition);
+                        break;
+                      default:
+                        screen = FoodOrderScreen(position: freshPosition);
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => screen),
+                    );
+                  }
+                },
               );
             },
           ),
-          const SizedBox(height: 24),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.2,
-            children: [
-              _CategoryCard(
-                title: t('food', lang),
-                icon: Icons.restaurant,
-                color: Colors.orange,
-                onTap: () async {
-                  Position? freshPosition;
-                  try {
-                    freshPosition = await Geolocator.getCurrentPosition();
-                  } catch (e) {
-                    freshPosition = position;
-                  }
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            FoodOrderScreen(position: freshPosition),
-                      ),
-                    );
-                  }
-                },
-              ),
-              _CategoryCard(
-                title: t('uber', lang),
-                icon: Icons.local_taxi,
-                color: Colors.blue,
-                onTap: () async {
-                  Position? freshPosition;
-                  try {
-                    freshPosition = await Geolocator.getCurrentPosition();
-                  } catch (e) {
-                    freshPosition = position;
-                  }
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            UberOrderScreen(position: freshPosition),
-                      ),
-                    );
-                  }
-                },
-              ),
-              _CategoryCard(
-                title: t('shop', lang),
-                icon: Icons.shopping_cart,
-                color: Colors.purple,
-                onTap: () async {
-                  Position? freshPosition;
-                  try {
-                    freshPosition = await Geolocator.getCurrentPosition();
-                  } catch (e) {
-                    freshPosition = position;
-                  }
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            ShopOrderScreen(position: freshPosition),
-                      ),
-                    );
-                  }
-                },
-              ),
-              _CategoryCard(
-                title: t('transport', lang),
-                icon: Icons.local_shipping,
-                color: Colors.brown,
-                onTap: () async {
-                  Position? freshPosition;
-                  try {
-                    freshPosition = await Geolocator.getCurrentPosition();
-                  } catch (e) {
-                    freshPosition = position;
-                  }
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            TransportOrderScreen(position: freshPosition),
-                      ),
-                    );
-                  }
-                },
-              ),
-              _CategoryCard(
-                title: t('others', lang),
-                icon: Icons.more_horiz,
-                color: Colors.teal,
-                onTap: () async {
-                  Position? freshPosition;
-                  try {
-                    freshPosition = await Geolocator.getCurrentPosition();
-                  } catch (e) {
-                    freshPosition = position;
-                  }
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            OthersOrderScreen(position: freshPosition),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _CategoryCard extends StatelessWidget {
+class _AnimatedCategoryCard extends StatelessWidget {
+  final int index;
   final String title;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
 
-  const _CategoryCard({
+  const _AnimatedCategoryCard({
+    required this.index,
     required this.title,
     required this.icon,
     required this.color,
@@ -526,38 +489,78 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [color.withOpacity(0.8), color],
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 40, color: Colors.white),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 400 + (index * 100)),
+      curve: Curves.easeOutCubic,
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 50 * (1 - value)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withOpacity(0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Left: icon in an egg‑shaped container
+                      Container(
+                        margin: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: color, width: 3),
+                        ),
+                        child: CircleAvatar(
+                          radius: 36,
+                          backgroundColor: color.withOpacity(0.1),
+                          child: Icon(icon, size: 36, color: color),
+                        ),
+                      ),
+                      // Right: text on coloured pill
+                      Expanded(
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Center(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                color: color,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -16,56 +16,165 @@ class FoodOrderScreen extends StatefulWidget {
   State<FoodOrderScreen> createState() => _FoodOrderScreenState();
 }
 
-class _FoodOrderScreenState extends State<FoodOrderScreen> {
+class _FoodOrderScreenState extends State<FoodOrderScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _orderController = TextEditingController();
   bool _isLoading = false;
+  late AnimationController _animController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.elasticOut,
+    );
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('food', lang))),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
+      appBar: AppBar(
+        title: Text(t('food', lang)),
+        backgroundColor: const Color(0xFFFF5724), // Orange
+      ),
+      body: ScaleTransition(
+        scale: _scaleAnimation,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: t('phone', lang),
-                  border: const OutlineInputBorder(),
+              // Food header card
+              Container(
+                height: 180,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF5724), Color(0xFFFF8B3D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF5724).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-                validator: (v) => v!.isEmpty ? t('required_field', lang) : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _orderController,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  labelText: t('order_details_label', lang),
-                  border: const OutlineInputBorder(),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white24,
+                      ),
+                      child: const Icon(
+                        Icons.restaurant,
+                        size: 50,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      t('food_heading', lang),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                validator: (v) => v!.isEmpty ? t('required_field', lang) : null,
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitOrder,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          t('confirm_order', lang),
-                          style: const TextStyle(fontSize: 18),
+
+              // Form card
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                elevation: 8,
+                shadowColor: Colors.black26,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: InputDecoration(
+                            labelText: t('phone', lang),
+                            prefixIcon: const Icon(
+                              Icons.phone,
+                              color: Color(0xFFFF5724),
+                            ),
+                          ),
+                          validator: (v) =>
+                              v!.isEmpty ? t('required_field', lang) : null,
                         ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _orderController,
+                          maxLines: 4,
+                          decoration: InputDecoration(
+                            labelText: t('order_details_label', lang),
+                            prefixIcon: const Icon(
+                              Icons.list_alt,
+                              color: Color(0xFFFF5724),
+                            ),
+                          ),
+                          validator: (v) =>
+                              v!.isEmpty ? t('required_field', lang) : null,
+                        ),
+                        const SizedBox(height: 30),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton.icon(
+                            onPressed: _isLoading ? null : _submitOrder,
+                            icon: const Icon(Icons.send_rounded),
+                            label: Text(
+                              t('confirm_order', lang),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF5724),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              elevation: 4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -126,10 +235,7 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
           });
 
       if (mounted) {
-        // Go back to home
         Navigator.pop(context);
-
-        // Show cancelable snackbar for 60 seconds
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 60),
@@ -175,7 +281,6 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
         return;
       }
 
-      // Check time difference
       final createdAt = data['createdAt'] as Timestamp?;
       if (createdAt != null) {
         final diff = DateTime.now()
@@ -210,7 +315,6 @@ class _FoodOrderScreenState extends State<FoodOrderScreen> {
     }
   }
 
-  // Helper to get current language code outside the build method
   String get lang =>
       Provider.of<LanguageProvider>(context, listen: false).locale.languageCode;
 }

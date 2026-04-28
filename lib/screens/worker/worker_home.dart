@@ -18,18 +18,34 @@ class WorkerHomeScreen extends StatefulWidget {
   State<WorkerHomeScreen> createState() => _WorkerHomeScreenState();
 }
 
-class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
+class _WorkerHomeScreenState extends State<WorkerHomeScreen>
+    with SingleTickerProviderStateMixin {
   String? _workerId;
   Map<String, dynamic>? _workerData;
   bool _isOnline = false;
-
-  // 🔁 Stores the previous order count to detect new orders → vibration
   int _previousOrderCount = 0;
+  late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOut,
+    );
+    _animController.forward();
     _loadWorkerData();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadWorkerData() async {
@@ -80,16 +96,50 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     }
 
     final specialties = List<String>.from(_workerData!['specialties'] ?? []);
-
     final languageProvider = Provider.of<LanguageProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
     final lang = languageProvider.locale.languageCode;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(t('worker_title', lang)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.delivery_dining),
+            const SizedBox(width: 8),
+            Text(t('worker_title', lang)),
+          ],
+        ),
         actions: [
-          // Settings icon → opens end drawer
+          // Online status pill
+          GestureDetector(
+            onTap: _toggleOnlineStatus,
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: _isOnline
+                    ? Colors.green.withOpacity(0.15)
+                    : Colors.grey.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _isOnline ? Colors.green : Colors.grey,
+                  width: 1.5,
+                ),
+              ),
+              child: Text(
+                _isOnline
+                    ? t('worker_status_online', lang)
+                    : t('worker_status_offline', lang),
+                style: TextStyle(
+                  color: _isOnline ? Colors.green : Colors.grey,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          // Settings icon
           Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.settings),
@@ -104,27 +154,48 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         languageProvider,
         themeProvider,
       ),
-      body: _isOnline
-          ? _buildOrdersList(specialties)
-          : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.power_settings_new, size: 80, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    t('you_are_offline', lang),
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(t('activate_button', lang)),
-                ],
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: _isOnline
+            ? _buildOrdersList(specialties)
+            : Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFFF8B3D).withOpacity(0.1),
+                      ),
+                      child: const Icon(
+                        Icons.power_settings_new,
+                        size: 64,
+                        color: Color(0xFFFF8B3D),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      t('you_are_offline', lang),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4A4A4A),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      t('activate_button', lang),
+                      style: TextStyle(color: Colors.grey.shade500),
+                    ),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
-  // ------ Worker's settings drawer ------
+  // ------ Settings drawer ------
   Drawer _buildSettingsDrawer(
     BuildContext context,
     String lang,
@@ -137,16 +208,20 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Icon(Icons.person, size: 60, color: Colors.red.shade300),
+            Icon(
+              Icons.person,
+              size: 60,
+              color: const Color(0xFFFF5724).withOpacity(0.3),
+            ),
             const SizedBox(height: 12),
             Text(
               t('settings', lang),
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 30),
-            // Language switcher
+            // Language
             ListTile(
-              leading: const Icon(Icons.language),
+              leading: const Icon(Icons.language, color: Color(0xFFFF5724)),
               title: Text(t('change_language', lang)),
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
@@ -161,9 +236,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 },
               ),
             ),
-            // Theme switcher
+            // Theme
             ListTile(
-              leading: const Icon(Icons.dark_mode),
+              leading: const Icon(Icons.dark_mode, color: Color(0xFFFF8B3D)),
               title: Text(t('theme', lang)),
               trailing: DropdownButton<String>(
                 value: _themeModeToKey(themeProvider.mode),
@@ -185,7 +260,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                 },
               ),
             ),
-            // Online / Offline toggle
+            // Online toggle
             SwitchListTile(
               secondary: Icon(
                 _isOnline ? Icons.toggle_on : Icons.toggle_off,
@@ -199,9 +274,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
               value: _isOnline,
               onChanged: (_) => _toggleOnlineStatus(),
             ),
-            // Worker Order History
+            // Order history
             ListTile(
-              leading: const Icon(Icons.history),
+              leading: const Icon(Icons.history, color: Color(0xFFFFB84D)),
               title: Text(t('history', lang)),
               onTap: () {
                 Navigator.pop(context);
@@ -214,7 +289,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             const Spacer(),
             // Logout
             ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
+              leading: const Icon(Icons.logout, color: Color(0xFFD33131)),
               title: Text(t('logout', lang)),
               onTap: () {
                 Navigator.pop(context);
@@ -228,7 +303,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     );
   }
 
-  // Helper methods for theme mode conversion
   String _themeModeToKey(AppThemeMode mode) {
     switch (mode) {
       case AppThemeMode.light:
@@ -251,9 +325,8 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
     }
   }
 
+  // ------ Orders list with animation ------
   Widget _buildOrdersList(List<String> specialties) {
-    debugPrint('🔔 Building orders list. Specialties: $specialties');
-
     if (specialties.isEmpty) {
       return const Center(
         child: Text('Aucune spécialité assignée. Contactez l\'admin.'),
@@ -271,21 +344,8 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error, size: 50, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Erreur: ${snapshot.error}'),
-                ],
-              ),
-            ),
-          );
+          return Center(child: Text('Erreur: ${snapshot.error}'));
         }
 
         final allOrders = snapshot.data?.docs ?? [];
@@ -296,35 +356,49 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
           return assigned == null || assigned == '';
         }).toList();
 
-        // 🟢 Vibration when a brand new order appears
+        // Vibration when new order appears
         if (filteredOrders.isNotEmpty && _previousOrderCount == 0) {
-          Vibration.vibrate(duration: 200); // short buzz
+          Vibration.vibrate(duration: 200);
         }
-        // Update previous count for next rebuild
         _previousOrderCount = filteredOrders.length;
 
         if (filteredOrders.isEmpty) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inbox, size: 80, color: Colors.grey),
-                SizedBox(height: 16),
-                Text('Aucune commande disponible'),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFFFB84D).withOpacity(0.1),
+                  ),
+                  child: const Icon(
+                    Icons.inbox,
+                    size: 64,
+                    color: Color(0xFFFFB84D),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Aucune commande disponible',
+                  style: TextStyle(color: Color(0xFF4A4A4A)),
+                ),
               ],
             ),
           );
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           itemCount: filteredOrders.length,
           itemBuilder: (context, index) {
             final order = filteredOrders[index].data() as Map<String, dynamic>?;
             final orderId = filteredOrders[index].id;
             if (order == null) return const SizedBox.shrink();
 
-            return _OrderCard(
+            return _AnimatedOrderCard(
+              index: index,
               order: order,
               orderId: orderId,
               workerId: _workerId!,
@@ -343,7 +417,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
             .collection('orders')
             .doc(orderId);
         final orderSnap = await transaction.get(orderRef);
-
         if (!orderSnap.exists) throw 'Commande introuvable';
         if (orderSnap.data()?['status'] != 'approved')
           throw 'Commande déjà prise';
@@ -353,7 +426,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
           'assignedWorkerId': _workerId,
           'assignedAt': FieldValue.serverTimestamp(),
         });
-
         transaction.update(
           FirebaseFirestore.instance.collection('workers').doc(_workerId),
           {'currentOrderId': orderId},
@@ -378,13 +450,16 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   }
 }
 
-class _OrderCard extends StatelessWidget {
+// ------ Animated order card ------
+class _AnimatedOrderCard extends StatelessWidget {
+  final int index;
   final Map<String, dynamic> order;
   final String orderId;
   final String workerId;
   final VoidCallback onAccept;
 
-  const _OrderCard({
+  const _AnimatedOrderCard({
+    required this.index,
     required this.order,
     required this.orderId,
     required this.workerId,
@@ -398,7 +473,6 @@ class _OrderCard extends StatelessWidget {
     final createdAt = order['createdAt'] != null
         ? (order['createdAt'] as Timestamp).toDate()
         : null;
-
     final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
 
     IconData typeIcon;
@@ -406,67 +480,127 @@ class _OrderCard extends StatelessWidget {
     switch (type) {
       case 'food':
         typeIcon = Icons.restaurant;
-        typeColor = Colors.orange;
+        typeColor = const Color(0xFFFF5724);
         break;
       case 'uber':
         typeIcon = Icons.local_taxi;
-        typeColor = Colors.blue;
+        typeColor = const Color(0xFFFF8B3D);
         break;
       case 'shop':
         typeIcon = Icons.shopping_cart;
-        typeColor = Colors.purple;
+        typeColor = const Color(0xFFFFB84D);
         break;
       case 'transport':
         typeIcon = Icons.local_shipping;
-        typeColor = Colors.brown;
+        typeColor = const Color(0xFF4A4A4A);
         break;
       default:
         typeIcon = Icons.help;
-        typeColor = Colors.grey;
+        typeColor = const Color(0xFFD33131);
     }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(typeIcon, color: typeColor, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  type.toUpperCase(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 400 + (index * 80)),
+      curve: Curves.easeOutCubic,
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 30 * (1 - value)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Card(
+                elevation: 4,
+                shadowColor: typeColor.withOpacity(0.15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: typeColor.withOpacity(0.1),
+                            ),
+                            child: Icon(typeIcon, color: typeColor, size: 28),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            type.toUpperCase(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: typeColor,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (createdAt != null)
+                            Text(
+                              '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}',
+                              style: TextStyle(color: Colors.grey.shade500),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.phone,
+                            size: 18,
+                            color: Color(0xFF4A4A4A),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            clientPhone,
+                            style: const TextStyle(color: Color(0xFF4A4A4A)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _getOrderSummary(order),
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: onAccept,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: typeColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: Text(
+                            t('accept_order', lang),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
-                if (createdAt != null)
-                  Text(
-                    '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text('📞 $clientPhone'),
-            const SizedBox(height: 4),
-            Text(_getOrderSummary(order)),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onAccept,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: Text(t('accept_order', lang)),
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

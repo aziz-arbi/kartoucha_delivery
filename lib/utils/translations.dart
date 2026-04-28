@@ -1,4 +1,34 @@
 Map<String, Map<String, String>> translations = {
+  'create_account': {
+    'fr': 'Créer un compte',
+    'en': 'Create an account',
+    'ar': 'إنشاء حساب',
+  },
+  'no_account': {
+    'fr': 'Pas de compte ?',
+    'en': 'No account?',
+    'ar': 'لا يوجد حساب؟',
+  },
+  'uber_heading': {
+    'fr': 'Où allez-vous ?',
+    'en': 'Where are you going?',
+    'ar': 'إلى أين تذهب؟',
+  },
+  'transport_heading': {
+    'fr': 'Qu\'avez-vous à transporter ?',
+    'en': 'What do you need to transport?',
+    'ar': 'ماذا تريد نقله؟',
+  },
+  'shop_heading': {
+    'fr': 'Qu\'avez-vous besoin du magasin ?',
+    'en': 'What do you need from the store?',
+    'ar': 'ماذا تحتاج من المتجر؟',
+  },
+  'others_heading': {
+    'fr': 'Qu\'avez-vous en tête ?',
+    'en': 'What do you have in mind?',
+    'ar': 'ماذا في بالك؟',
+  },
   'history': {'fr': 'Historique', 'en': 'History', 'ar': 'السجل'},
   'order_sent_cancel_hint': {
     'fr': 'Commande envoyée. Vous pouvez annuler dans la minute.',
