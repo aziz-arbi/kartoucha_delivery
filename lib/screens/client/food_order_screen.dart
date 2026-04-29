@@ -127,17 +127,16 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
                           keyboardType: TextInputType.phone,
                           decoration: InputDecoration(
                             labelText: t('phone', lang),
-                            prefixIcon: const Icon(Icons.phone, color: Color(0xFFFF5724)),
+                            prefixIcon: const Icon(
+                              Icons.phone,
+                              color: Color(0xFFFF5724),
+                            ),
                           ),
-                          validator: (v) => PhoneValidator.validate(v, t('required_field', lang)),
-                              
+                          validator: (v) => PhoneValidator.validate(
+                            v,
+                            t('required_field', lang),
+                          ),
                         ),
-
-
-
-
-
-                        
                         const SizedBox(height: 20),
                         TextFormField(
                           controller: _orderController,
@@ -222,36 +221,25 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      final orderRef = await FirebaseFirestore.instance
-          .collection('orders')
-          .add({
-            'type': 'food',
-            'clientId': user!.uid,
-            'clientPhone': _phoneController.text.trim(),
-            'orderDetails': _orderController.text.trim(),
-            'status': 'pending',
-            'createdAt': FieldValue.serverTimestamp(),
-            'location': GeoPoint(
-              widget.position!.latitude,
-              widget.position!.longitude,
-            ),
-            // ⚠️ NO assignedWorkerId here
-          });
+      // Create order without capturing the reference (no cancellation)
+      await FirebaseFirestore.instance.collection('orders').add({
+        'type': 'food',
+        'clientId': user!.uid,
+        'clientPhone': _phoneController.text.trim(),
+        'orderDetails': _orderController.text.trim(),
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'location': GeoPoint(
+          widget.position!.latitude,
+          widget.position!.longitude,
+        ),
+      });
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: const Duration(seconds: 60),
-            content: Text(t('order_sent_cancel_hint', lang)),
-            action: SnackBarAction(
-              label: t('cancel', lang),
-              onPressed: () async {
-                await _cancelOrder(orderRef.id);
-              },
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(t('order_sent', lang))));
       }
     } catch (e) {
       if (mounted) {
@@ -261,61 +249,6 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  /// Cancels the order if it's still pending and less than 60 seconds old.
-  Future<void> _cancelOrder(String orderId) async {
-    try {
-      final orderSnap = await FirebaseFirestore.instance
-          .collection('orders')
-          .doc(orderId)
-          .get();
-
-      if (!orderSnap.exists) return;
-
-      final data = orderSnap.data()!;
-      final status = data['status'] as String?;
-      if (status != 'pending') {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(t('cancel_too_late', lang))));
-        }
-        return;
-      }
-
-      final createdAt = data['createdAt'] as Timestamp?;
-      if (createdAt != null) {
-        final diff = DateTime.now()
-            .toUtc()
-            .difference(createdAt.toDate())
-            .inSeconds;
-        if (diff > 60) {
-          if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(t('cancel_too_late', lang))));
-          }
-          return;
-        }
-      }
-
-      await FirebaseFirestore.instance.collection('orders').doc(orderId).update(
-        {'status': 'cancelled'},
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(t('order_cancelled', lang))));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${t('error', lang)}: $e')));
-      }
     }
   }
 

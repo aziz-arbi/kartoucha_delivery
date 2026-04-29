@@ -13,6 +13,7 @@ import 'transport_order_screen.dart';
 import 'others_order_screen.dart';
 import 'offers_screen.dart';
 import 'client_order_history.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -300,6 +301,20 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
               },
             ),
             const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.privacy_tip),
+              title: Text('Privacy Policy'),
+              onTap: () async {
+                final url =
+                    'https://your-deployed-url/privacy_policy.html'; // replace with your real URL
+                if (await canLaunchUrl(Uri.parse(url))) {
+                  launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                }
+              },
+            ),
           ],
         ),
       ),

@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen>
             children: [
               // ----- Header with gradient -----
               Container(
-                height: 260,
+                height: 280, // slightly taller to accommodate subtitle
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -156,20 +156,43 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
                       const Spacer(),
-                      // Logo and title
+                      // Logo image
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withOpacity(0.2),
                         ),
-                        child: const Icon(
-                          Icons.delivery_dining,
-                          size: 60,
-                          color: Colors.white,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(50),
+                          child: Image.asset(
+                            'assets/images/logo.png', // your logo file
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.delivery_dining,
+                                size: 50,
+                                color: Colors.white,
+                              );
+                            },
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
+                      // Tagline
+                      Text(
+                        t('FRE', lang),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      // App title
                       Text(
                         t('title', lang),
                         style: const TextStyle(
@@ -179,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen>
                           letterSpacing: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                     ],
                   ),
                 ),

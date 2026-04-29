@@ -234,7 +234,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      final orderRef = await FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('orders')
           .add({
             'type': 'others',
@@ -253,18 +253,9 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: const Duration(seconds: 60),
-            content: Text(t('order_sent_cancel_hint', lang)),
-            action: SnackBarAction(
-              label: t('cancel', lang),
-              onPressed: () async {
-                await _cancelOrder(orderRef.id);
-              },
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(t('order_sent', lang))));
       }
     } catch (e) {
       if (mounted) {
@@ -274,61 +265,6 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  /// Cancels the order if it's still pending and within 60 seconds.
-  Future<void> _cancelOrder(String orderId) async {
-    try {
-      final orderSnap = await FirebaseFirestore.instance
-          .collection('orders')
-          .doc(orderId)
-          .get();
-
-      if (!orderSnap.exists) return;
-
-      final data = orderSnap.data()!;
-      final status = data['status'] as String?;
-      if (status != 'pending') {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(t('cancel_too_late', lang))));
-        }
-        return;
-      }
-
-      final createdAt = data['createdAt'] as Timestamp?;
-      if (createdAt != null) {
-        final diff = DateTime.now()
-            .toUtc()
-            .difference(createdAt.toDate())
-            .inSeconds;
-        if (diff > 60) {
-          if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(t('cancel_too_late', lang))));
-          }
-          return;
-        }
-      }
-
-      await FirebaseFirestore.instance.collection('orders').doc(orderId).update(
-        {'status': 'cancelled'},
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(t('order_cancelled', lang))));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${t('error', lang)}: $e')));
-      }
     }
   }
 

@@ -18,6 +18,8 @@ dependencies:
   # Firebase Authentication (login/signup)
   firebase_auth: ^5.3.0
 
+  package_info_plus: ^8.1.2
+
   # Cloud Firestore (database for orders, workers, offers)
   cloud_firestore: ^5.4.0
 
@@ -62,8 +64,8 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "icon.jpeg"
+  image_path: "icon.png"
   # optionally remove existing alpha/round icons on Android
   remove_alpha_ios: true
   adaptive_icon_background: "#FFFFFF"   # background for Android adaptive icon
-  adaptive_icon_foreground: "icon.jpeg"   # foreground for Android adaptive icon
+  adaptive_icon_foreground: "icon.png"   # foreground for Android adaptive icon

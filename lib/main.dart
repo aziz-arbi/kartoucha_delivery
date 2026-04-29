@@ -3,13 +3,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'firebase_options.dart';
 import 'providers/language_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/notification_service.dart';
+import 'services/update_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/client/client_home.dart';
 import 'screens/worker/worker_home.dart';
+import 'screens/splash_screen.dart';
 
 // ---------- New Colour Palette ----------
 const Color orange = Color(0xFFFF5724);
@@ -124,7 +127,6 @@ final darkTheme = ThemeData(
   ),
 );
 
-
 // ---------- App Entry ----------
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -165,12 +167,80 @@ class KartouchaApp extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      home: const AuthWrapper(),
+      home: const AppStartup(),
     );
   }
 }
 
-// ---------- AuthWrapper (unchanged, only print -> debugPrint) ----------
+// ---------- AppStartup: Splash → Force Update → AuthWrapper ----------
+class AppStartup extends StatefulWidget {
+  const AppStartup({super.key});
+
+  @override
+  State<AppStartup> createState() => _AppStartupState();
+}
+
+class _AppStartupState extends State<AppStartup> {
+  @override
+  void initState() {
+    super.initState();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    // Show splash for at least 2 seconds while checking updates
+    await Future.wait([
+      Future.delayed(const Duration(seconds: 2)),
+      UpdateService.isUpdateRequired(),
+    ]);
+
+    if (!mounted) return;
+
+    final updateRequired = await UpdateService.isUpdateRequired();
+    if (updateRequired) {
+      _showForceUpdateDialog();
+    } else {
+      // Navigate to the main auth wrapper
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthWrapper()),
+      );
+    }
+  }
+
+  void _showForceUpdateDialog() async {
+    final updateUrl = await UpdateService.getUpdateUrl();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Mise à jour requise'),
+        content: const Text(
+          'Une nouvelle version de l\'application est disponible.\n'
+          'Veuillez la mettre à jour pour continuer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final url = Uri.parse(updateUrl);
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: const Text('Mettre à jour'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const SplashScreen();
+  }
+}
+
+// ---------- AuthWrapper (unchanged) ----------
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 

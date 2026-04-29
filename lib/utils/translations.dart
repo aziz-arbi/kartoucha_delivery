@@ -1,4 +1,9 @@
 Map<String, Map<String, String>> translations = {
+  'FRE': {
+    'fr': 'RAPIDE • FIABLE • PARTOUT',
+    'en': 'FAST • RELIABLE • EVERYWHERE',
+    'ar': 'سريع • موثوق • في كل مكان'
+  },
   'food_heading': {
     'fr': 'Qu est-ce que tu veux manger ?',
     'en': 'What do you want to eat',
