@@ -10,6 +10,7 @@ import '../../utils/translations.dart';
 import '../../services/auth_service.dart';
 import 'order_details_screen.dart';
 import 'worker_order_history.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class WorkerHomeScreen extends StatefulWidget {
   const WorkerHomeScreen({super.key});
@@ -297,6 +298,20 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
               },
             ),
             const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.privacy_tip),
+              title: Text('Privacy Policy'),
+              onTap: () async {
+                final url =
+                    'https://your-deployed-url/privacy_policy.html'; // replace with your real URL
+                if (await canLaunchUrl(Uri.parse(url))) {
+                  launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                }
+              },
+            ),
           ],
         ),
       ),

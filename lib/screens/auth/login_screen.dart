@@ -10,6 +10,7 @@ import '../../services/auth_service.dart';
 import 'signup_screen.dart';
 import '../client/client_home.dart';
 import '../worker/worker_home.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -286,9 +287,11 @@ class _LoginScreenState extends State<LoginScreen>
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(t('contact_admin', lang)),
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ForgotPasswordScreen(),
                                     ),
                                   );
                                 },

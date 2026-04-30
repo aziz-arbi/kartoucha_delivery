@@ -175,23 +175,6 @@ class _AnimatedOfferCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          // Action button (optional)
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton.icon(
-                              onPressed: () {
-                                // Could navigate to more details or order page
-                              },
-                              icon: const Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 18,
-                              ),
-                              label: const Text('En savoir plus'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFFFF5724),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),

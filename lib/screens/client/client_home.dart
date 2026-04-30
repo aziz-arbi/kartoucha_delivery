@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../utils/translations.dart';
@@ -13,7 +14,7 @@ import 'transport_order_screen.dart';
 import 'others_order_screen.dart';
 import 'offers_screen.dart';
 import 'client_order_history.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'chat_screen.dart'; // ← new import
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -182,6 +183,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
       OrderCategoriesScreen(position: _currentPosition),
       const OffersScreen(),
       const ClientOrderHistory(),
+      const ClientChatScreen(), // ← 4th tab
     ];
 
     final languageProvider = Provider.of<LanguageProvider>(context);
@@ -227,12 +229,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             icon: const Icon(Icons.history),
             label: t('history', lang),
           ),
+          BottomNavigationBarItem(icon: const Icon(Icons.chat), label: 'Chat'),
         ],
       ),
     );
   }
 
-  // ------ Settings drawer (unchanged) ------
+  // ------ Settings drawer (now with Chat button) ------
   Drawer _buildSettingsDrawer(
     BuildContext context,
     String lang,
@@ -252,9 +255,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 30),
+            // Language switcher
             ListTile(
               leading: const Icon(Icons.language),
-              title: Text(''),
+              title: Text(t('change_language', lang)),
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),
@@ -268,9 +272,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                 },
               ),
             ),
+            // Theme switcher
             ListTile(
               leading: const Icon(Icons.dark_mode),
-              title: Text(' '),
+              title: Text(t('theme', lang)),
               trailing: DropdownButton<String>(
                 value: _themeModeToKey(themeProvider.mode),
                 underline: const SizedBox(),
@@ -291,7 +296,20 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                 },
               ),
             ),
+            // Chat button
+            ListTile(
+              leading: const Icon(Icons.chat),
+              title: const Text('Chat'),
+              onTap: () {
+                Navigator.pop(context); // close drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ClientChatScreen()),
+                );
+              },
+            ),
             const Spacer(),
+            // Logout
             ListTile(
               leading: const Icon(Icons.logout, color: Color(0xFFD33131)),
               title: Text(t('logout', lang)),
@@ -301,12 +319,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
               },
             ),
             const SizedBox(height: 20),
+            // Privacy Policy
             ListTile(
               leading: const Icon(Icons.privacy_tip),
-              title: Text('Privacy Policy'),
+              title: const Text('Privacy Policy'),
               onTap: () async {
                 final url =
-                    'https://your-deployed-url/privacy_policy.html'; // replace with your real URL
+                    'https://aziz-arbi.github.io/3jaja_delivery_legal_pages/privacy_policy.html';
                 if (await canLaunchUrl(Uri.parse(url))) {
                   launchUrl(
                     Uri.parse(url),
@@ -344,7 +363,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
   }
 }
 
-// ---------- ORDER CATEGORIES SCREEN ----------
+// ---------- ORDER CATEGORIES SCREEN (unchanged) ----------
 class OrderCategoriesScreen extends StatelessWidget {
   final Position? position;
   const OrderCategoriesScreen({super.key, this.position});
@@ -385,7 +404,6 @@ class OrderCategoriesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
-
     return Column(
       children: [
         StreamBuilder<QuerySnapshot>(
@@ -480,7 +498,7 @@ class OrderCategoriesScreen extends StatelessWidget {
   }
 }
 
-// ---------- CORRECTED CARD WITH ROUNDED LEFT + SMALL RIGHT CORNERS ----------
+// ---------- CARD WITH ROUNDED LEFT + SMALL RIGHT CORNERS (unchanged) ----------
 class _AnimatedCategoryCard extends StatelessWidget {
   final int index;
   final String title;
@@ -502,7 +520,6 @@ class _AnimatedCategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     const double leftRadius = 30;
     const double rightRadius = 12;
-
     return TweenAnimationBuilder<double>(
       duration: Duration(milliseconds: 400 + (index * 100)),
       curve: Curves.easeOutCubic,
@@ -524,8 +541,6 @@ class _AnimatedCategoryCard extends StatelessWidget {
                 ),
                 child: Container(
                   height: 130,
-                  // The shadow is drawn here, but the container has no clipping.
-                  // We add another container inside that actually clips.
                   foregroundDecoration: BoxDecoration(
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(leftRadius),
@@ -550,7 +565,6 @@ class _AnimatedCategoryCard extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        // Left image (70%)
                         Expanded(
                           flex: 7,
                           child: Container(
@@ -564,7 +578,6 @@ class _AnimatedCategoryCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // Right coloured panel (30%)
                         Expanded(
                           flex: 3,
                           child: Container(
