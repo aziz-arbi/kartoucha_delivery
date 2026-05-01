@@ -38,6 +38,7 @@ class AuthService {
       'password': password,
       'createdAt': FieldValue.serverTimestamp(),
       'approved': false,
+      'denied': false,
     });
   }
 

@@ -75,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen>
                 const SizedBox(height: 12),
                 // Tagline
                 Text(
-                  'FAST • RELIABLE • EVERYWHERE',
+                  t('FRE', lang),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
                     fontSize: 13,
@@ -86,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen>
                 const SizedBox(height: 8),
                 // App name
                 Text(
-                  t('app_name', lang),
+                  t('title', lang),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,

@@ -183,7 +183,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
       OrderCategoriesScreen(position: _currentPosition),
       const OffersScreen(),
       const ClientOrderHistory(),
-      const ClientChatScreen(), // ← 4th tab
+      //const ClientChatScreen(), // ← 4th tab
     ];
 
     final languageProvider = Provider.of<LanguageProvider>(context);
@@ -229,7 +229,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             icon: const Icon(Icons.history),
             label: t('history', lang),
           ),
-          BottomNavigationBarItem(icon: const Icon(Icons.chat), label: 'Chat'),
+          //BottomNavigationBarItem(icon: const Icon(Icons.chat), label: 'Chat'),
         ],
       ),
     );
@@ -258,7 +258,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             // Language switcher
             ListTile(
               leading: const Icon(Icons.language),
-              title: Text(t('change_language', lang)),
+              title: Text(' '),
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),
@@ -275,7 +275,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
             // Theme switcher
             ListTile(
               leading: const Icon(Icons.dark_mode),
-              title: Text(t('theme', lang)),
+              title: Text(' '),
               trailing: DropdownButton<String>(
                 value: _themeModeToKey(themeProvider.mode),
                 underline: const SizedBox(),
@@ -297,17 +297,17 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
               ),
             ),
             // Chat button
-            ListTile(
-              leading: const Icon(Icons.chat),
-              title: const Text('Chat'),
-              onTap: () {
-                Navigator.pop(context); // close drawer
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ClientChatScreen()),
-                );
-              },
-            ),
+            //ListTile(
+              //leading: const Icon(Icons.chat),
+              //title: const Text('Chat'),
+              //onTap: () {
+                //Navigator.pop(context); // close drawer
+                //Navigator.push(
+                  //context,
+                  //MaterialPageRoute(builder: (_) => const ClientChatScreen()),
+                //);
+              //},
+            //),
             const Spacer(),
             // Logout
             ListTile(
