@@ -1,4 +1,21 @@
 Map<String, Map<String, String>> translations = {
+  'i_accept': {'fr': 'J\'accepte les', 'en': 'I accept the', 'ar': 'أوافق على'},
+  'terms_of_service': {
+    'fr': 'conditions d\'utilisation',
+    'en': 'Terms of Service',
+    'ar': 'شروط الخدمة',
+  },
+  'and': {'fr': 'et la', 'en': 'and the', 'ar': 'و'},
+  'privacy_policy': {
+    'fr': 'politique de confidentialité',
+    'en': 'Privacy Policy',
+    'ar': 'سياسة الخصوصية',
+  },
+  'must_accept_terms': {
+    'fr': 'Vous devez accepter les conditions.',
+    'en': 'You must accept the terms.',
+    'ar': 'يجب عليك الموافقة على الشروط.',
+  },
   'FRE': {
     'fr': 'RAPIDE • FIABLE • PARTOUT',
     'en': 'FAST • RELIABLE • EVERYWHERE',
