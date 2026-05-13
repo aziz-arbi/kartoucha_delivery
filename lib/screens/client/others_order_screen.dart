@@ -8,6 +8,7 @@ import '../../utils/translations.dart';
 import '../../utils/operating_hours_utils.dart';
 import '../../utils/zone_utils.dart';
 import '../../utils/phone_validator.dart';
+import '../../utils/delivery_fee_utils.dart'; // ← new import
 
 class OthersOrderScreen extends StatefulWidget {
   final Position? position;
@@ -133,7 +134,10 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
                               color: Color(0xFFFF5724), // Orange
                             ),
                           ),
-                          validator: (v) => PhoneValidator.validate(v, t('required_field', lang)),
+                          validator: (v) => PhoneValidator.validate(
+                            v,
+                            t('required_field', lang),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         TextFormField(
@@ -188,6 +192,54 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
                             ),
                           ),
                         ),
+
+                        // ---------- Delivery fee display ----------
+                        const SizedBox(height: 16),
+                        const Divider(color: Colors.grey, thickness: 1),
+                        const SizedBox(height: 8),
+                        if (widget.position != null)
+                          FutureBuilder<Map<String, dynamic>>(
+                            future: DeliveryFeeUtils.calculateFee(
+                              widget.position!.latitude,
+                              widget.position!.longitude,
+                            ),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                );
+                              }
+                              if (!snapshot.hasData) {
+                                return Text(
+                                  '${t('delivery_fee', lang)} : ${t('free', lang)}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                );
+                              }
+                              final feeInfo = snapshot.data!;
+                              final fee = feeInfo['fee'] as double;
+                              final summary = feeInfo['summary'] as String;
+                              return Column(
+                                children: [
+                                  Text(
+                                    '${t('delivery_fee', lang)} : ${fee.toStringAsFixed(2)} ${t('currency', lang)}',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF4A4A4A),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
                       ],
                     ),
                   ),
@@ -230,26 +282,38 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
       }
     }
 
+    // 3️⃣ Calculate delivery fee
+    double deliveryFee = 0.0;
+    String feeSummary = 'Gratuit';
+    if (widget.position != null) {
+      final feeInfo = await DeliveryFeeUtils.calculateFee(
+        widget.position!.latitude,
+        widget.position!.longitude,
+      );
+      deliveryFee = feeInfo['fee'] as double;
+      feeSummary = feeInfo['summary'] as String;
+    }
+
     setState(() => _isLoading = true);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance
-          .collection('orders')
-          .add({
-            'type': 'others',
-            'clientId': user!.uid,
-            'clientPhone': _phoneController.text.trim(),
-            'fromWhere': _fromWhereController.text.trim(),
-            'whatIsIt': _whatIsItController.text.trim(),
-            'status': 'pending',
-            'createdAt': FieldValue.serverTimestamp(),
-            'location': GeoPoint(
-              widget.position!.latitude,
-              widget.position!.longitude,
-            ),
-            // ⚠️ NO assignedWorkerId here
-          });
+      await FirebaseFirestore.instance.collection('orders').add({
+        'type': 'others',
+        'clientId': user!.uid,
+        'clientPhone': _phoneController.text.trim(),
+        'fromWhere': _fromWhereController.text.trim(),
+        'whatIsIt': _whatIsItController.text.trim(),
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'location': GeoPoint(
+          widget.position!.latitude,
+          widget.position!.longitude,
+        ),
+        // Delivery fee
+        'deliveryFee': deliveryFee,
+        'feeSummary': feeSummary,
+      });
 
       if (mounted) {
         Navigator.pop(context);

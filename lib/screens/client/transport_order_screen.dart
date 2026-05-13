@@ -133,7 +133,10 @@ class _TransportOrderScreenState extends State<TransportOrderScreen>
                               color: Color(0xFFFF5724), // Orange accent
                             ),
                           ),
-                          validator: (v) => PhoneValidator.validate(v, t('required_field', lang)),
+                          validator: (v) => PhoneValidator.validate(
+                            v,
+                            t('required_field', lang),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         TextFormField(
@@ -234,22 +237,20 @@ class _TransportOrderScreenState extends State<TransportOrderScreen>
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance
-          .collection('orders')
-          .add({
-            'type': 'transport',
-            'clientId': user!.uid,
-            'clientPhone': _phoneController.text.trim(),
-            'destination': _destinationController.text.trim(),
-            'whatToTransport': _whatToTransportController.text.trim(),
-            'status': 'pending',
-            'createdAt': FieldValue.serverTimestamp(),
-            'location': GeoPoint(
-              widget.position!.latitude,
-              widget.position!.longitude,
-            ),
-            // ⚠️ NO assignedWorkerId here
-          });
+      await FirebaseFirestore.instance.collection('orders').add({
+        'type': 'transport',
+        'clientId': user!.uid,
+        'clientPhone': _phoneController.text.trim(),
+        'destination': _destinationController.text.trim(),
+        'whatToTransport': _whatToTransportController.text.trim(),
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'location': GeoPoint(
+          widget.position!.latitude,
+          widget.position!.longitude,
+        ),
+        // ⚠️ NO assignedWorkerId here
+      });
 
       if (mounted) {
         Navigator.pop(context);

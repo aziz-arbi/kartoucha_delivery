@@ -1,14 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
+import '../../utils/translations.dart';
 
 class ClientOrderHistory extends StatelessWidget {
   const ClientOrderHistory({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return const Center(child: Text('Non connecté'));
+
+    if (user == null) {
+      return Center(child: Text(t('not_connected', lang)));
+    }
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -21,11 +28,11 @@ class ClientOrderHistory extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text('Erreur: ${snapshot.error}'));
+          return Center(child: Text('${t('error', lang)}: ${snapshot.error}'));
         }
         final orders = snapshot.data?.docs ?? [];
         if (orders.isEmpty) {
-          return const Center(child: Text('Aucune commande passée.'));
+          return Center(child: Text(t('no_orders', lang)));
         }
         return ListView.builder(
           itemCount: orders.length,
@@ -34,14 +41,22 @@ class ClientOrderHistory extends StatelessWidget {
             final status = order['status'] ?? 'inconnu';
             final type = order['type'] ?? '?';
             final date = (order['createdAt'] as Timestamp?)?.toDate();
-            return ListTile(
-              leading: Icon(_iconForType(type)),
-              title: Text('$type - $status'),
-              subtitle: date != null
-                  ? Text(
-                      '${date.day}/${date.month}/${date.year}  ${date.hour}:${date.minute}',
-                    )
-                  : null,
+
+            // Translate status and type
+            final translatedStatus = t('status_$status', lang);
+            final translatedType = t(type, lang);
+
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: ListTile(
+                leading: Icon(_iconForType(type)),
+                title: Text('$translatedType - $translatedStatus'),
+                subtitle: date != null
+                    ? Text(
+                        '${date.day}/${date.month}/${date.year}  ${date.hour}:${date.minute}',
+                      )
+                    : null,
+              ),
             );
           },
         );

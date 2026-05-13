@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../providers/language_provider.dart';
+import '../../utils/translations.dart';
+import 'package:provider/provider.dart';
 
 class OffersScreen extends StatelessWidget {
   const OffersScreen({super.key});
@@ -17,6 +20,7 @@ class OffersScreen extends StatelessWidget {
         }
 
         final offers = snapshot.data?.docs ?? [];
+        final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
 
         // Empty state
         if (offers.isEmpty) {
@@ -37,8 +41,8 @@ class OffersScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Aucune offre pour le moment',
+                Text(
+                  t('no_offer', lang),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -47,7 +51,7 @@ class OffersScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Revenez bientôt pour découvrir nos promotions !',
+                  t('cmbk_offer', lang),
                   style: TextStyle(color: Colors.grey.shade500),
                 ),
               ],

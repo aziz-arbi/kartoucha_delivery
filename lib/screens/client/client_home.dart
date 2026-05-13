@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +15,9 @@ import 'transport_order_screen.dart';
 import 'others_order_screen.dart';
 import 'offers_screen.dart';
 import 'client_order_history.dart';
-import 'chat_screen.dart'; // ← new import
+import 'chat_screen.dart';
+import 'order_tracking_screen.dart';
+import 'worker_application_screen.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -80,6 +83,58 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
       });
     } catch (e) {
       _showLocationErrorDialog();
+    }
+  }
+
+  void _showContactDialog(BuildContext context, String lang) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t('follow_us', lang)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(
+                Icons.phone_android,
+                color: Color(0xFF25D366),
+              ),
+              title: Text(t('whatsapp', lang)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _openUrl('https://wa.me/21622880917');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Color(0xFFE1306C)),
+              title: Text(t('instagram', lang)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _openUrl('https://www.instagram.com/3jeja__delivery/');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.facebook, color: Color(0xFF1877F2)),
+              title: Text(t('facebook', lang)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _openUrl('https://www.facebook.com/share/14Y1nNkxEMD/');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.phone, color: Color.fromARGB(255, 119, 119, 119),),
+              title: Text('${t('phone', lang)} : 22880917'),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -296,17 +351,36 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
                 },
               ),
             ),
+            // Contact button
+            ListTile(
+              leading: const Icon(Icons.contact_mail, color: Color(0xFFFF8B3D)),
+              title: Text(t('contact', lang)),
+              onTap: () => _showContactDialog(context, lang),
+            ),
+            ListTile(
+              leading: const Icon(Icons.work_outline, color: Color(0xFFFF8B3D)),
+              title: Text(t('apply_worker', lang)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const WorkerApplicationScreen(),
+                  ),
+                );
+              },
+            ),
             // Chat button
             //ListTile(
-              //leading: const Icon(Icons.chat),
-              //title: const Text('Chat'),
-              //onTap: () {
-                //Navigator.pop(context); // close drawer
-                //Navigator.push(
-                  //context,
-                  //MaterialPageRoute(builder: (_) => const ClientChatScreen()),
-                //);
-              //},
+            //leading: const Icon(Icons.chat),
+            //title: const Text('Chat'),
+            //onTap: () {
+            //Navigator.pop(context); // close drawer
+            //Navigator.push(
+            //context,
+            //MaterialPageRoute(builder: (_) => const ClientChatScreen()),
+            //);
+            //},
             //),
             const Spacer(),
             // Logout
@@ -363,7 +437,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
   }
 }
 
-// ---------- ORDER CATEGORIES SCREEN (unchanged) ----------
+// ========== ORDER CATEGORIES SCREEN ==========
 class OrderCategoriesScreen extends StatelessWidget {
   final Position? position;
   const OrderCategoriesScreen({super.key, this.position});
@@ -401,11 +475,29 @@ class OrderCategoriesScreen extends StatelessWidget {
     },
   ];
 
+  IconData _iconForType(String type) {
+    switch (type) {
+      case 'food':
+        return Icons.restaurant;
+      case 'uber':
+        return Icons.local_taxi;
+      case 'shop':
+        return Icons.shopping_cart;
+      case 'transport':
+        return Icons.local_shipping;
+      default:
+        return Icons.help;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
     return Column(
       children: [
+        // 1. Workers online banner (fixed)
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('workers')
@@ -442,10 +534,139 @@ class OrderCategoriesScreen extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 8),
+
+        // 2. Active order card (translated)
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('orders')
+              .where('clientId', isEqualTo: currentUid)
+              .where('status', whereNotIn: ['completed', 'cancelled'])
+              .orderBy('createdAt', descending: true)
+              .limit(1)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox.shrink();
+            }
+            final orders = snapshot.data?.docs ?? [];
+            if (orders.isEmpty) return const SizedBox.shrink();
+
+            final orderData = orders.first.data() as Map<String, dynamic>;
+            final orderId = orders.first.id;
+            final type = orderData['type'] ?? 'food';
+            final status = orderData['status'] ?? 'pending';
+
+            String statusText;
+            Color statusColor;
+            switch (status) {
+              case 'pending':
+                statusText = t('status_pending', lang);
+                statusColor = Colors.orange;
+                break;
+              case 'approved':
+                statusText = t('status_approved', lang);
+                statusColor = Colors.blue;
+                break;
+              case 'assigned':
+                statusText = t('status_assigned', lang);
+                statusColor = Colors.green;
+                break;
+              default:
+                statusText = status;
+                statusColor = Colors.grey;
+            }
+
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _iconForType(type),
+                      color: statusColor,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${t('your_order', lang)} ${t(type, lang)}', // ← translated type
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(Icons.circle, size: 8, color: statusColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              statusText,
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => OrderTrackingScreen(orderId: orderId),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF5724),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      t('track', lang),
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
+        // 3. Scrollable category list
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             itemCount: categories.length,
             itemBuilder: (context, index) {
               final cat = categories[index];
@@ -498,7 +719,7 @@ class OrderCategoriesScreen extends StatelessWidget {
   }
 }
 
-// ---------- CARD WITH ROUNDED LEFT + SMALL RIGHT CORNERS (unchanged) ----------
+// _AnimatedCategoryCard (unchanged)
 class _AnimatedCategoryCard extends StatelessWidget {
   final int index;
   final String title;
