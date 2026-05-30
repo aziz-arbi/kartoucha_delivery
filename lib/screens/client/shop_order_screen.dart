@@ -8,7 +8,7 @@ import '../../utils/translations.dart';
 import '../../utils/operating_hours_utils.dart';
 import '../../utils/zone_utils.dart';
 import '../../utils/phone_validator.dart';
-import '../../utils/delivery_fee_utils.dart'; // ← new import
+import '../../utils/delivery_fee_utils.dart';
 
 class ShopOrderScreen extends StatefulWidget {
   final Position? position;
@@ -213,10 +213,6 @@ class _ShopOrderScreenState extends State<ShopOrderScreen>
                               if (!snapshot.hasData) {
                                 return Text(
                                   '${t('delivery_fee', lang)} : ${t('free', lang)}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
                                 );
                               }
                               final feeInfo = snapshot.data!;
@@ -230,6 +226,14 @@ class _ShopOrderScreenState extends State<ShopOrderScreen>
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF4A4A4A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    summary,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade600,
                                     ),
                                   ),
                                 ],
@@ -280,7 +284,7 @@ class _ShopOrderScreenState extends State<ShopOrderScreen>
 
     // 3️⃣ Calculate delivery fee
     double deliveryFee = 0.0;
-    String feeSummary = 'Gratuit';
+    String feeSummary = t('free', lang);
     if (widget.position != null) {
       final feeInfo = await DeliveryFeeUtils.calculateFee(
         widget.position!.latitude,
@@ -306,7 +310,6 @@ class _ShopOrderScreenState extends State<ShopOrderScreen>
           widget.position!.latitude,
           widget.position!.longitude,
         ),
-        // Delivery fee
         'deliveryFee': deliveryFee,
         'feeSummary': feeSummary,
       });

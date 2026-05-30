@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../utils/translations.dart';
@@ -15,9 +14,9 @@ import 'transport_order_screen.dart';
 import 'others_order_screen.dart';
 import 'offers_screen.dart';
 import 'client_order_history.dart';
-import 'chat_screen.dart';
+import 'notifications_screen.dart';
+import 'account_screen.dart'; // new Account screen
 import 'order_tracking_screen.dart';
-import 'worker_application_screen.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -83,58 +82,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
       });
     } catch (e) {
       _showLocationErrorDialog();
-    }
-  }
-
-  void _showContactDialog(BuildContext context, String lang) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t('follow_us', lang)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(
-                Icons.phone_android,
-                color: Color(0xFF25D366),
-              ),
-              title: Text(t('whatsapp', lang)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _openUrl('https://wa.me/21622880917');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Color(0xFFE1306C)),
-              title: Text(t('instagram', lang)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _openUrl('https://www.instagram.com/3jeja__delivery/');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.facebook, color: Color(0xFF1877F2)),
-              title: Text(t('facebook', lang)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _openUrl('https://www.facebook.com/share/14Y1nNkxEMD/');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.phone, color: Color.fromARGB(255, 119, 119, 119),),
-              title: Text('${t('phone', lang)} : 22880917'),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _openUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -234,210 +181,125 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // 4 functional tabs: Home(0), History(1), Offers(2), Account(3)
     final screens = [
       OrderCategoriesScreen(position: _currentPosition),
-      const OffersScreen(),
       const ClientOrderHistory(),
-      //const ClientChatScreen(), // ← 4th tab
+      const OffersScreen(),
+      const AccountScreen(),
     ];
 
-    final languageProvider = Provider.of<LanguageProvider>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final lang = languageProvider.locale.languageCode;
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t('title', lang)),
+        title: const Text('3jeja'),
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
+          // Only notification bell – no settings icon
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              );
+            },
           ),
         ],
-      ),
-      endDrawer: _buildSettingsDrawer(
-        context,
-        lang,
-        languageProvider,
-        themeProvider,
       ),
       body: screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        selectedItemColor: const Color(0xFFFF5724),
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home),
-            label: t('order', lang),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.local_offer),
-            label: t('offers', lang),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.history),
-            label: t('history', lang),
-          ),
-          //BottomNavigationBarItem(icon: const Icon(Icons.chat), label: 'Chat'),
-        ],
-      ),
+      bottomNavigationBar: _buildBottomNav(context, lang),
     );
   }
 
-  // ------ Settings drawer (now with Chat button) ------
-  Drawer _buildSettingsDrawer(
-    BuildContext context,
-    String lang,
-    LanguageProvider languageProvider,
-    ThemeProvider themeProvider,
-  ) {
-    return Drawer(
-      width: MediaQuery.of(context).size.width * 0.6,
-      child: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Icon(Icons.person, size: 60, color: Colors.red.shade300),
-            const SizedBox(height: 12),
-            Text(
-              t('settings', lang),
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 30),
-            // Language switcher
-            ListTile(
-              leading: const Icon(Icons.language),
-              title: Text(' '),
-              trailing: DropdownButton<String>(
-                value: languageProvider.locale.languageCode,
-                underline: const SizedBox(),
-                items: const [
-                  DropdownMenuItem(value: 'fr', child: Text('Français')),
-                  DropdownMenuItem(value: 'en', child: Text('English')),
-                  DropdownMenuItem(value: 'ar', child: Text('Tounsi')),
-                ],
-                onChanged: (value) {
-                  if (value != null) languageProvider.setLanguage(value);
-                },
-              ),
-            ),
-            // Theme switcher
-            ListTile(
-              leading: const Icon(Icons.dark_mode),
-              title: Text(' '),
-              trailing: DropdownButton<String>(
-                value: _themeModeToKey(themeProvider.mode),
-                underline: const SizedBox(),
-                items: [
-                  DropdownMenuItem(
-                    value: 'light',
-                    child: Text(t('light', lang)),
-                  ),
-                  DropdownMenuItem(value: 'dark', child: Text(t('dark', lang))),
-                  DropdownMenuItem(
-                    value: 'system',
-                    child: Text(t('system_default', lang)),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null)
-                    themeProvider.setTheme(_keyToThemeMode(value));
-                },
-              ),
-            ),
-            // Contact button
-            ListTile(
-              leading: const Icon(Icons.contact_mail, color: Color(0xFFFF8B3D)),
-              title: Text(t('contact', lang)),
-              onTap: () => _showContactDialog(context, lang),
-            ),
-            ListTile(
-              leading: const Icon(Icons.work_outline, color: Color(0xFFFF8B3D)),
-              title: Text(t('apply_worker', lang)),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const WorkerApplicationScreen(),
-                  ),
-                );
-              },
-            ),
-            // Chat button
-            //ListTile(
-            //leading: const Icon(Icons.chat),
-            //title: const Text('Chat'),
-            //onTap: () {
-            //Navigator.pop(context); // close drawer
-            //Navigator.push(
-            //context,
-            //MaterialPageRoute(builder: (_) => const ClientChatScreen()),
-            //);
-            //},
-            //),
-            const Spacer(),
-            // Logout
-            ListTile(
-              leading: const Icon(Icons.logout, color: Color(0xFFD33131)),
-              title: Text(t('logout', lang)),
-              onTap: () {
-                Navigator.pop(context);
-                AuthService().signOut();
-              },
-            ),
-            const SizedBox(height: 20),
-            // Privacy Policy
-            ListTile(
-              leading: const Icon(Icons.privacy_tip),
-              title: const Text('Privacy Policy'),
-              onTap: () async {
-                final url =
-                    'https://aziz-arbi.github.io/3jaja_delivery_legal_pages/privacy_policy.html';
-                if (await canLaunchUrl(Uri.parse(url))) {
-                  launchUrl(
-                    Uri.parse(url),
-                    mode: LaunchMode.externalApplication,
-                  );
-                }
-              },
-            ),
-          ],
+  // ---------- Custom bottom bar with centered floating logo ----------
+  Widget _buildBottomNav(BuildContext context, String lang) {
+    // The items array includes 5 slots: Home, History, (placeholder), Offers, Account
+    final items = [
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.home),
+        label: t('home', lang),
+      ),
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.receipt_long),
+        label: t('history', lang),
+      ),
+      // Placeholder for center – invisible, so the logo appears on top
+      const BottomNavigationBarItem(icon: SizedBox.shrink(), label: ''),
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.local_offer),
+        label: t('offers', lang),
+      ),
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.person),
+        label: t('account', lang),
+      ),
+    ];
+
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        BottomNavigationBar(
+          currentIndex: _selectedIndex < 2
+              ? _selectedIndex
+              : _selectedIndex + 1, // skip center
+          onTap: (index) {
+            if (index == 2)
+              return; // center tapped – handled by the floating button
+            setState(() {
+              _selectedIndex = index > 2 ? index - 1 : index;
+            });
+          },
+          selectedItemColor: const Color(0xFFFF5724),
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          type: BottomNavigationBarType.fixed,
+          items: items,
         ),
-      ),
+        // Floating 3jeja logo button
+        Positioned(
+          top: -30, // half outside
+          child: GestureDetector(
+            onTap: () {
+              setState(() => _selectedIndex = 0);
+            },
+            child: Container(
+              width: 70,
+              height: 70,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFF5724),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFFFF5724),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Image.asset(
+                  'assets/images/logo.png', // your 3jeja logo – use a white version if possible
+                  width: 40,
+                  height: 40,
+                  color: Colors.white,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.delivery_dining,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
-  }
-
-  String _themeModeToKey(AppThemeMode mode) {
-    switch (mode) {
-      case AppThemeMode.light:
-        return 'light';
-      case AppThemeMode.dark:
-        return 'dark';
-      case AppThemeMode.system:
-        return 'system';
-    }
-  }
-
-  AppThemeMode _keyToThemeMode(String key) {
-    switch (key) {
-      case 'light':
-        return AppThemeMode.light;
-      case 'dark':
-        return AppThemeMode.dark;
-      default:
-        return AppThemeMode.system;
-    }
   }
 }
 
-// ========== ORDER CATEGORIES SCREEN ==========
+// ---------- OrderCategoriesScreen (unchanged from your existing code) ----------
 class OrderCategoriesScreen extends StatelessWidget {
   final Position? position;
   const OrderCategoriesScreen({super.key, this.position});
@@ -497,7 +359,7 @@ class OrderCategoriesScreen extends StatelessWidget {
 
     return Column(
       children: [
-        // 1. Workers online banner (fixed)
+        // 1. Workers online banner
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('workers')
@@ -595,7 +457,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
+                      color: statusColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -610,7 +472,7 @@ class OrderCategoriesScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${t('your_order', lang)} ${t(type, lang)}', // ← translated type
+                          '${t('your_order', lang)} ${t(type, lang)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 15,
@@ -719,7 +581,7 @@ class OrderCategoriesScreen extends StatelessWidget {
   }
 }
 
-// _AnimatedCategoryCard (unchanged)
+// ---------- _AnimatedCategoryCard (unchanged) ----------
 class _AnimatedCategoryCard extends StatelessWidget {
   final int index;
   final String title;

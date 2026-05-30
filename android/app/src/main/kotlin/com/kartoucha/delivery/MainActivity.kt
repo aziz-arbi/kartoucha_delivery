@@ -1,4 +1,4 @@
-package com.yourcompany.kartoucha.kartoucha_delivery
+package com.kartoucha.delivery
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

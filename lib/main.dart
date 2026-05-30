@@ -14,7 +14,7 @@ import 'screens/client/client_home.dart';
 import 'screens/worker/worker_home.dart';
 import 'screens/splash_screen.dart';
 
-// ---------- New Colour Palette ----------
+// ---------- 3jeja Brand Palette ----------
 const Color orange = Color(0xFFFF5724);
 const Color neonCarrot = Color(0xFFFF8B3D);
 const Color texasRose = Color(0xFFFFB84D);
@@ -23,18 +23,19 @@ const Color persianRed = Color(0xFFD33131);
 
 // ---------- Light Theme ----------
 final lightTheme = ThemeData(
+  brightness: Brightness.light,
   colorScheme: ColorScheme.fromSeed(
     seedColor: orange,
     brightness: Brightness.light,
     primary: orange,
     secondary: neonCarrot,
-    surface: const Color(0xFFF5F5F5),
+    surface: Colors.white,
     error: persianRed,
     onPrimary: Colors.white,
     onSecondary: Colors.white,
     onSurface: tundora,
   ),
-  scaffoldBackgroundColor: const Color(0xFFFAFAFA),
+  scaffoldBackgroundColor: const Color(0xFFF8F9FA),
   appBarTheme: const AppBarTheme(
     backgroundColor: orange,
     foregroundColor: Colors.white,
@@ -44,20 +45,23 @@ final lightTheme = ThemeData(
   cardTheme: CardThemeData(
     elevation: 4,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     color: Colors.white,
+    shadowColor: Colors.black12,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: orange,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      elevation: 2,
     ),
   ),
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
     fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -70,12 +74,26 @@ final lightTheme = ThemeData(
       borderRadius: BorderRadius.circular(16),
       borderSide: const BorderSide(color: orange, width: 2),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  ),
+  textTheme: const TextTheme(
+    headlineLarge: TextStyle(color: tundora, fontWeight: FontWeight.bold),
+    headlineMedium: TextStyle(color: tundora, fontWeight: FontWeight.w700),
+    titleLarge: TextStyle(color: tundora, fontWeight: FontWeight.w600),
+    bodyLarge: TextStyle(color: tundora),
+    bodyMedium: TextStyle(color: tundora),
+  ),
+  iconTheme: const IconThemeData(color: orange),
+  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    selectedItemColor: orange,
+    unselectedItemColor: Colors.grey,
+    backgroundColor: Colors.white,
+    type: BottomNavigationBarType.fixed,
   ),
 );
 
 // ---------- Dark Theme ----------
 final darkTheme = ThemeData(
+  brightness: Brightness.dark,
   colorScheme: ColorScheme.fromSeed(
     seedColor: orange,
     brightness: Brightness.dark,
@@ -97,20 +115,23 @@ final darkTheme = ThemeData(
   cardTheme: CardThemeData(
     elevation: 4,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-    color: const Color(0xFF1E1E1E),
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    color: const Color(0xFF2A2A2A),
+    shadowColor: Colors.black26,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: orange,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      elevation: 2,
     ),
   ),
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
-    fillColor: const Color(0xFF2C2C2C),
+    fillColor: const Color(0xFF2A2A2A),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
       borderSide: BorderSide.none,
@@ -123,11 +144,24 @@ final darkTheme = ThemeData(
       borderRadius: BorderRadius.circular(16),
       borderSide: const BorderSide(color: neonCarrot, width: 2),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  ),
+  textTheme: const TextTheme(
+    headlineLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    headlineMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+    titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+    bodyLarge: TextStyle(color: Colors.white70),
+    bodyMedium: TextStyle(color: Colors.white70),
+  ),
+  iconTheme: const IconThemeData(color: orange),
+  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    selectedItemColor: orange,
+    unselectedItemColor: Colors.grey,
+    backgroundColor: Color(0xFF1E1E1E),
+    type: BottomNavigationBarType.fixed,
   ),
 );
 
-// ---------- App Entry ----------
+// ---------- App Entry (unchanged) ----------
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -146,14 +180,14 @@ void main() async {
         ChangeNotifierProvider(create: (_) => languageProvider),
         ChangeNotifierProvider(create: (_) => themeProvider),
       ],
-      child: const KartouchaApp(),
+      child: const _3jejaApp(),
     ),
   );
 }
 
-// ---------- App Root ----------
-class KartouchaApp extends StatelessWidget {
-  const KartouchaApp({super.key});
+// ---------- App Root (renamed to 3jeja) ----------
+class _3jejaApp extends StatelessWidget {
+  const _3jejaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +195,7 @@ class KartouchaApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-      title: 'Kartoucha Delivery',
+      title: '3jeja',
       debugShowCheckedModeBanner: false,
       locale: languageProvider.locale,
       theme: lightTheme,
@@ -172,7 +206,7 @@ class KartouchaApp extends StatelessWidget {
   }
 }
 
-// ---------- AppStartup: Splash → Force Update → AuthWrapper ----------
+// ---------- AppStartup: Splash → Force Update → AuthWrapper (unchanged) ----------
 class AppStartup extends StatefulWidget {
   const AppStartup({super.key});
 
@@ -188,7 +222,6 @@ class _AppStartupState extends State<AppStartup> {
   }
 
   Future<void> _initialize() async {
-    // Show splash for at least 2 seconds while checking updates
     await Future.wait([
       Future.delayed(const Duration(seconds: 2)),
       UpdateService.isUpdateRequired(),
@@ -200,7 +233,6 @@ class _AppStartupState extends State<AppStartup> {
     if (updateRequired) {
       _showForceUpdateDialog();
     } else {
-      // Navigate to the main auth wrapper
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AuthWrapper()),

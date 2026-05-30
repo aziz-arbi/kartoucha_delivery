@@ -81,26 +81,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             distanceFilter: 0,
             timeLimit: Duration(minutes: 1),
           ),
-        ).listen((Position pos) async {
+        ).listen((Position pos) {
           setState(() {
             _workerPosition = LatLng(pos.latitude, pos.longitude);
           });
           _fetchRoute();
-
-          // 🔁 Store worker location for client tracking
-          try {
-            await FirebaseFirestore.instance
-                .collection('orders')
-                .doc(widget.orderId)
-                .update({
-                  'workerLocation': GeoPoint(pos.latitude, pos.longitude),
-                });
-          } catch (e) {
-            debugPrint('Failed to update worker location: $e');
-          }
         });
 
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       _fetchRoute();
     });
 
@@ -170,7 +158,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             'status': 'completed',
             'completedAt': FieldValue.serverTimestamp(),
             'assignedWorkerId': FieldValue.delete(),
-            'workerLocation': FieldValue.delete(), // clean up tracking data
           },
         );
         transaction.update(
@@ -207,11 +194,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         transaction.update(
           FirebaseFirestore.instance.collection('orders').doc(widget.orderId),
-          {
-            'status': 'approved',
-            'assignedWorkerId': FieldValue.delete(),
-            'workerLocation': FieldValue.delete(), // clean up
-          },
+          {'status': 'approved', 'assignedWorkerId': FieldValue.delete()},
         );
         transaction.update(
           FirebaseFirestore.instance.collection('workers').doc(workerDocId),

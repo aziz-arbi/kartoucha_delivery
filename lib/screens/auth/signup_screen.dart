@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/translations.dart';
 import '../../utils/phone_validator.dart';
 import '../../services/auth_service.dart';
 import 'verification_screen.dart';
-import 'package:flutter/gestures.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -22,16 +20,9 @@ class _SignupScreenState extends State<SignupScreen>
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _acceptedTerms = true;   // pre‑checked
   bool _isLoading = false;
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
-
-  // URLs for the legal pages – replace with your actual URLs if different
-  static const String privacyUrl =
-      'https://aziz-arbi.github.io/3jaja_delivery_legal_pages/privacy_policy.html';
-  static const String termsUrl =
-      'https://aziz-arbi.github.io/3jaja_delivery_legal_pages/terms_of_service.html';
 
   @override
   void initState() {
@@ -50,15 +41,11 @@ class _SignupScreenState extends State<SignupScreen>
   @override
   void dispose() {
     _animController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
-  }
-
-  // ---- open a URL in the external browser ----
-  Future<void> _openUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
   }
 
   @override
@@ -104,7 +91,16 @@ class _SignupScreenState extends State<SignupScreen>
                         shape: BoxShape.circle,
                         color: Colors.white24,
                       ),
-                      child: const Icon(Icons.person_add, size: 40, color: Colors.white),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        width: 40,
+                        height: 40,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.person_add,
+                          size: 40,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -137,7 +133,10 @@ class _SignupScreenState extends State<SignupScreen>
                           controller: _nameController,
                           decoration: InputDecoration(
                             labelText: t('full_name', lang),
-                            prefixIcon: const Icon(Icons.person, color: Color(0xFFFF5724)),
+                            prefixIcon: const Icon(
+                              Icons.person,
+                              color: Color(0xFFFF5724),
+                            ),
                           ),
                           validator: (v) =>
                               v!.isEmpty ? t('required_field', lang) : null,
@@ -148,10 +147,15 @@ class _SignupScreenState extends State<SignupScreen>
                           keyboardType: TextInputType.phone,
                           decoration: InputDecoration(
                             labelText: t('phone', lang),
-                            prefixIcon: const Icon(Icons.phone, color: Color(0xFFFF5724)),
+                            prefixIcon: const Icon(
+                              Icons.phone,
+                              color: Color(0xFFFF5724),
+                            ),
                           ),
-                          validator: (v) =>
-                              PhoneValidator.validate(v, t('required_field', lang)),
+                          validator: (v) => PhoneValidator.validate(
+                            v,
+                            t('required_field', lang),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         TextFormField(
@@ -159,7 +163,10 @@ class _SignupScreenState extends State<SignupScreen>
                           obscureText: true,
                           decoration: InputDecoration(
                             labelText: t('password', lang),
-                            prefixIcon: const Icon(Icons.lock, color: Color(0xFFFF8B3D)),
+                            prefixIcon: const Icon(
+                              Icons.lock,
+                              color: Color(0xFFFF8B3D),
+                            ),
                           ),
                           validator: (v) {
                             if (v!.isEmpty) return t('required_field', lang);
@@ -173,7 +180,10 @@ class _SignupScreenState extends State<SignupScreen>
                           obscureText: true,
                           decoration: InputDecoration(
                             labelText: t('confirm_password', lang),
-                            prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFFFFB84D)),
+                            prefixIcon: const Icon(
+                              Icons.lock_outline,
+                              color: Color(0xFFFFB84D),
+                            ),
                           ),
                           validator: (v) {
                             if (v != _passwordController.text) {
@@ -182,66 +192,7 @@ class _SignupScreenState extends State<SignupScreen>
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
-
-                        // -------------------- Terms & Privacy checkbox --------------------
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Checkbox(
-                              value: _acceptedTerms,
-                              onChanged: (val) => setState(() => _acceptedTerms = val ?? true),
-                              activeColor: const Color(0xFFFF5724),
-                            ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
-                                child: RichText(
-                                  text: TextSpan(
-                                    style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-                                    children: [
-                                      TextSpan(text: '${t('i_accept', lang)} '),
-                                      TextSpan(
-                                        text: t('terms_of_service', lang),
-                                        style: const TextStyle(
-                                          color: Color(0xFFFF5724),
-                                          fontWeight: FontWeight.bold,
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                        recognizer: TapGestureRecognizer()..onTap = () => _openUrl(termsUrl),
-                                      ),
-                                      TextSpan(text: ' ${t('and', lang)} '),
-                                      TextSpan(
-                                        text: t('privacy_policy', lang),
-                                        style: const TextStyle(
-                                          color: Color(0xFFFF5724),
-                                          fontWeight: FontWeight.bold,
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                        recognizer: TapGestureRecognizer()..onTap = () => _openUrl(privacyUrl),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // Custom validator message for terms
-                        if (!_acceptedTerms)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12),
-                            child: Text(
-                              t('must_accept_terms', lang),
-                              style: const TextStyle(color: Colors.red, fontSize: 12),
-                            ),
-                          ),
-
-                        const SizedBox(height: 12),
-
-                        // -------------------- End Terms checkbox --------------------
-
+                        const SizedBox(height: 30),
                         SizedBox(
                           width: double.infinity,
                           height: 55,
@@ -250,12 +201,17 @@ class _SignupScreenState extends State<SignupScreen>
                             icon: const Icon(Icons.arrow_forward),
                             label: Text(
                               t('signup_button', lang),
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFFF8B3D),
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                               elevation: 4,
                             ),
                           ),
@@ -275,14 +231,6 @@ class _SignupScreenState extends State<SignupScreen>
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_acceptedTerms) {
-      // Show a snackbar if terms not accepted (additional to the inline message)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t('must_accept_terms', Provider.of<LanguageProvider>(context, listen: false).locale.languageCode))),
-      );
-      return;
-    }
-
     setState(() => _isLoading = true);
     try {
       await AuthService().registerUser(
@@ -295,14 +243,19 @@ class _SignupScreenState extends State<SignupScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => VerificationScreen(phone: _phoneController.text.trim()),
+            builder: (_) =>
+                VerificationScreen(phone: _phoneController.text.trim()),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${t('error', Provider.of<LanguageProvider>(context, listen: false).locale.languageCode)}: $e')),
+          SnackBar(
+            content: Text(
+              '${t('error', Provider.of<LanguageProvider>(context, listen: false).locale.languageCode)}: $e',
+            ),
+          ),
         );
       }
     } finally {

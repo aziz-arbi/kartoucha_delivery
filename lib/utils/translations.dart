@@ -1,4 +1,225 @@
 Map<String, Map<String, String>> translations = {
+  'edit_profile': {
+    'fr': 'Modifier le profil',
+    'en': 'Edit Profile',
+    'ar': 'تعديل الملف الشخصي',
+  },
+  'favorites': {'fr': 'Favoris', 'en': 'Favorites', 'ar': 'المفضلة'},
+  'help_center': {
+    'fr': 'Centre d\'aide',
+    'en': 'Help Center',
+    'ar': 'مركز المساعدة',
+  },
+  'contact_support': {
+    'fr': 'Contacter le support',
+    'en': 'Contact Support',
+    'ar': 'اتصل بالدعم',
+  },
+  'live_payment': {
+    'fr': 'Paiement à la livraison',
+    'en': 'Live Payment',
+    'ar': 'الدفع عند الاستلام',
+  },
+  'live_payment_title': {
+    'fr': 'Paiement à la livraison',
+    'en': 'Pay on Delivery',
+    'ar': 'الدفع عند الاستلام',
+  },
+  'how_live_payment_works': {
+    'fr': 'Comment ça marche',
+    'en': 'How It Works',
+    'ar': 'كيف تعمل',
+  },
+  'live_payment_step1_title': {
+    'fr': 'Vous commandez',
+    'en': 'You order',
+    'ar': 'أنت تطلب',
+  },
+  'live_payment_step1_desc': {
+    'fr': 'Choisissez ce que vous voulez dans l\'application',
+    'en': 'Choose what you want in the app',
+    'ar': 'اختر ما تريد في التطبيق',
+  },
+  'live_payment_step2_title': {
+    'fr': '3jeja achète',
+    'en': '3jeja purchases',
+    'ar': '3jeja تشتري',
+  },
+  'live_payment_step2_desc': {
+    'fr': 'Notre agent achète l\'article pour vous',
+    'en': 'Our agent buys the item for you',
+    'ar': 'وكيلنا يشتري السلعة لك',
+  },
+  'live_payment_step3_title': {
+    'fr': 'On vous livre',
+    'en': 'We deliver',
+    'ar': 'نقوم بالتوصيل',
+  },
+  'live_payment_step3_desc': {
+    'fr': 'Un livreur vous apporte votre commande',
+    'en': 'A courier brings your order',
+    'ar': 'سائق يوصل طلبك',
+  },
+  'live_payment_step4_title': {
+    'fr': 'Vous payez',
+    'en': 'You pay',
+    'ar': 'أنت تدفع',
+  },
+  'live_payment_step4_desc': {
+    'fr': 'Payez en espèces à la réception',
+    'en': 'Pay cash upon delivery',
+    'ar': 'ادفع نقداً عند الاستلام',
+  },
+  'why_trust_us': {
+    'fr': 'Pourquoi nous faire confiance',
+    'en': 'Why Trust Us',
+    'ar': 'لماذا تثق بنا',
+  },
+  'safe': {'fr': 'Sécurisé', 'en': 'Safe', 'ar': 'آمن'},
+  'verified': {'fr': 'Vérifié', 'en': 'Verified', 'ar': 'موثق'},
+  'reliable': {'fr': 'Fiable', 'en': 'Reliable', 'ar': 'موثوق'},
+  'fast': {'fr': 'Rapide', 'en': 'Fast', 'ar': 'سريع'},
+  'learn_more_coming': {
+    'fr': 'Plus d\'informations bientôt',
+    'en': 'More info coming soon',
+    'ar': 'المزيد من المعلومات قريباً',
+  },
+  'referral_title': {
+    'fr': 'Invitez vos amis et gagnez',
+    'en': 'Invite Friends & Earn',
+    'ar': 'ادعُ أصدقاءك واربح',
+  },
+  'referral_subtitle': {
+    'fr': 'Partagez votre code et recevez des réductions',
+    'en': 'Share your code and get discounts',
+    'ar': 'شارك رمزك واحصل على خصومات',
+  },
+  'your_referral_code': {
+    'fr': 'Votre code de parrainage',
+    'en': 'Your Referral Code',
+    'ar': 'رمز الإحالة الخاص بك',
+  },
+  'share_code': {
+    'fr': 'Partager mon code',
+    'en': 'Share My Code',
+    'ar': 'مشاركة الرمز',
+  },
+  'referral_progress': {'fr': 'Progression', 'en': 'Progress', 'ar': 'التقدم'},
+  'referrals': {'fr': 'invitations', 'en': 'referrals', 'ar': 'دعوات'},
+  'how_referral_works': {
+    'fr': 'Comment ça marche',
+    'en': 'How It Works',
+    'ar': 'كيف تعمل',
+  },
+  'referral_step1': {
+    'fr': 'Partagez votre code avec vos amis',
+    'en': 'Share your code with friends',
+    'ar': 'شارك رمزك مع أصدقائك',
+  },
+  'referral_step2': {
+    'fr': 'Vos amis téléchargent l\'application',
+    'en': 'Your friends download the app',
+    'ar': 'يقوم أصدقاؤك بتحميل التطبيق',
+  },
+  'referral_step3': {
+    'fr': 'Recevez des récompenses',
+    'en': 'Receive rewards',
+    'ar': 'احصل على مكافآت',
+  },
+  'no_addresses': {
+    'fr': 'Aucune adresse enregistrée',
+    'en': 'No saved addresses',
+    'ar': 'لا توجد عناوين محفوظة',
+  },
+  'add_address': {
+    'fr': 'Ajouter une adresse',
+    'en': 'Add Address',
+    'ar': 'إضافة عنوان',
+  },
+  'home': {'fr': 'Domicile', 'en': 'Home', 'ar': 'المنزل'},
+  'address': {'fr': 'Adresse', 'en': 'Address', 'ar': 'العنوان'},
+  'save': {'fr': 'Enregistrer', 'en': 'Save', 'ar': 'حفظ'},
+  'name': {'fr': 'Nom', 'en': 'Name', 'ar': 'الاسم'},
+  'notifications': {
+    'fr': 'Notifications',
+    'en': 'Notifications',
+    'ar': 'إشعارات',
+  },
+  'no_notifications': {
+    'fr': 'Aucune notification',
+    'en': 'No notifications',
+    'ar': 'لا توجد إشعارات',
+  },
+  'today': {'fr': 'Aujourd\'hui', 'en': 'Today', 'ar': 'اليوم'},
+  'yesterday': {'fr': 'Hier', 'en': 'Yesterday', 'ar': 'أمس'},
+  'account': {'fr': 'Mon compte', 'en': 'My Account', 'ar': 'حسابي'},
+  'my_orders': {'fr': 'Mes commandes', 'en': 'My Orders', 'ar': 'طلباتي'},
+  'saved_addresses': {
+    'fr': 'Adresses enregistrées',
+    'en': 'Saved Addresses',
+    'ar': 'العناوين المحفوظة',
+  },
+  'invite_friends': {
+    'fr': 'Inviter des amis',
+    'en': 'Invite Friends',
+    'ar': 'دعوة الأصدقاء',
+  },
+  'support': {'fr': 'Support', 'en': 'Support', 'ar': 'الدعم'},
+  'about_3jeja': {
+    'fr': 'À propos de 3jeja',
+    'en': 'About 3jeja',
+    'ar': 'عن 3jeja',
+  },
+  'coming_soon': {
+    'fr': 'Bientôt disponible',
+    'en': 'Coming soon',
+    'ar': 'قريباً',
+  },
+  'logout_confirm_title': {
+    'fr': 'Se déconnecter',
+    'en': 'Logout',
+    'ar': 'تسجيل الخروج',
+  },
+  'logout_confirm_body': {
+    'fr': 'Êtes‑vous sûr de vouloir vous déconnecter ?',
+    'en': 'Are you sure you want to logout?',
+    'ar': 'هل أنت متأكد من تسجيل الخروج؟',
+  },
+  'all': {'fr': 'Tout', 'en': 'All', 'ar': 'الكل'},
+  'history': {'fr': 'Historique', 'en': 'History', 'ar': 'السجل'},
+  'no_offers': {
+    'fr': 'Aucune offre pour le moment',
+    'en': 'No offers available',
+    'ar': 'لا توجد عروض حالياً',
+  },
+  'expires': {'fr': 'Expire le', 'en': 'Expires', 'ar': 'تنتهي في'},
+  'apply_offer': {
+    'fr': 'Appliquer l\'offre',
+    'en': 'Apply Offer',
+    'ar': 'تطبيق العرض',
+  },
+  'offer_applied': {
+    'fr': 'Offre appliquée',
+    'en': 'Offer applied',
+    'ar': 'تم تطبيق العرض',
+  },
+  'verification': {'fr': 'Vérification', 'en': 'Verification', 'ar': 'تحقق'},
+  'verification_sent': {
+    'fr': 'Code envoyé',
+    'en': 'Code sent',
+    'ar': 'تم إرسال الرمز',
+  },
+  'enter_code': {
+    'fr': 'Entrez le code reçu par SMS',
+    'en': 'Enter the SMS code',
+    'ar': 'أدخل الرمز المرسل',
+  },
+  'verify': {'fr': 'Vérifier', 'en': 'Verify', 'ar': 'تحقق'},
+  'tagline': {
+    'fr': 'Rapide • Fiable • Partout',
+    'en': 'Fast • Reliable • Everywhere',
+    'ar': 'سريع • موثوق • في كل مكان',
+  },
   'uber': {'fr': 'Taxi', 'en': 'Ride', 'ar': 'وصلني'},
   'track': {'fr': 'Suivre', 'en': 'Track', 'ar': 'تتبع'},
   'not_connected': {
@@ -41,7 +262,6 @@ Map<String, Map<String, String>> translations = {
     'en': 'Your courier',
     'ar': 'عامل التوصيل الخاص بك',
   },
-  'name': {'fr': 'Nom', 'en': 'Name', 'ar': 'الاسم'},
   'status': {'fr': 'Statut', 'en': 'Status', 'ar': 'الحالة'},
   'cmbk_offer':{
     'fr': 'Revenez bientôt pour découvrir nos promotions !',
@@ -160,7 +380,7 @@ Map<String, Map<String, String>> translations = {
     'en': 'What do you have in mind?',
     'ar': 'ماذا في بالك؟',
   },
-  'history': {'fr': 'Historique', 'en': 'History', 'ar': 'السجل'},
+
   'order_sent_cancel_hint': {
     'fr': 'Commande envoyée. Vous pouvez annuler dans la minute.',
     'en': 'Order sent. You can cancel within 1 minute.',

@@ -8,7 +8,7 @@ import '../../utils/translations.dart';
 import '../../utils/operating_hours_utils.dart';
 import '../../utils/zone_utils.dart';
 import '../../utils/phone_validator.dart';
-import '../../utils/delivery_fee_utils.dart'; // ← new import
+import '../../utils/delivery_fee_utils.dart';
 
 class FoodOrderScreen extends StatefulWidget {
   final Position? position;
@@ -53,13 +53,10 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
 
   // Check if a restaurant is currently open based on its hours
   bool _isRestaurantOpen(Map<String, dynamic> restaurant) {
-    // 1. Check if today is a closed day
     final closedDays = List<int>.from(restaurant['closedDays'] ?? []);
-    // DateTime.weekday: Mon=1 … Sun=7. We match admin’s 0=Sun.
     final today = DateTime.now().weekday % 7;
     if (closedDays.contains(today)) return false;
 
-    // 2. If no opening hours are set, the restaurant is always open
     final openStr = restaurant['openTime'] as String? ?? '';
     final closeStr = restaurant['closeTime'] as String? ?? '';
     if (openStr.isEmpty || closeStr.isEmpty) return true;
@@ -68,7 +65,7 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
       final now = DateTime.now();
       final openParts = openStr.split(':');
       final closeParts = closeStr.split(':');
-      DateTime openTime = DateTime(
+      final openTime = DateTime(
         now.year,
         now.month,
         now.day,
@@ -82,16 +79,11 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
         int.parse(closeParts[0]),
         int.parse(closeParts[1]),
       );
-
-      // Handle overnight hours (e.g. 22:00 – 02:00)
       if (closeTime.isBefore(openTime)) {
-        // Move closeTime to the next day
         closeTime = closeTime.add(const Duration(days: 1));
       }
-
       return now.isAfter(openTime) && now.isBefore(closeTime);
     } catch (_) {
-      // If parsing fails, better to show the restaurant than to hide it
       return true;
     }
   }
@@ -254,7 +246,7 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
                                             ),
                                             border: Border.all(
                                               color: isSelected
-                                                  ? const Color.fromARGB(255, 250, 71, 0)
+                                                  ? const Color(0xFFFF5724)
                                                   : Colors.grey.shade300,
                                               width: isSelected ? 2 : 1,
                                             ),
@@ -262,7 +254,7 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
                                                 ? const Color(
                                                     0xFFFF5724,
                                                   ).withValues(alpha: 0.1)
-                                                : const Color.fromARGB(255, 250, 71, 0),
+                                                : Colors.white,
                                           ),
                                           padding: const EdgeInsets.all(8),
                                           child: Column(
@@ -390,10 +382,6 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
                               if (!snapshot.hasData) {
                                 return Text(
                                   '${t('delivery_fee', lang)} : ${t('free', lang)}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
                                 );
                               }
                               final feeInfo = snapshot.data!;
@@ -406,7 +394,15 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: Color.fromARGB(255, 255, 102, 0),
+                                      color: Color(0xFF4A4A4A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    summary,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade600,
                                     ),
                                   ),
                                 ],
@@ -457,7 +453,7 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
 
     // 3️⃣ Calculate delivery fee
     double deliveryFee = 0.0;
-    String feeSummary = 'Gratuit';
+    String feeSummary = t('free', lang);
     if (widget.position != null) {
       final feeInfo = await DeliveryFeeUtils.calculateFee(
         widget.position!.latitude,
@@ -482,12 +478,10 @@ class _FoodOrderScreenState extends State<FoodOrderScreen>
           widget.position!.latitude,
           widget.position!.longitude,
         ),
-        // Restaurant info (optional)
         if (_selectedRestaurantId != null)
           'restaurantId': _selectedRestaurantId,
         if (_selectedRestaurantName != null)
           'restaurantName': _selectedRestaurantName,
-        // Delivery fee
         'deliveryFee': deliveryFee,
         'feeSummary': feeSummary,
       });

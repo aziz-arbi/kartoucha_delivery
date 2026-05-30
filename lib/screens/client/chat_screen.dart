@@ -27,6 +27,14 @@ class _ClientChatScreenState extends State<ClientChatScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
+    // Create parent chat document
+    await FirebaseFirestore.instance.collection('chats').doc(user.uid).set({
+      'clientId': user.uid,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastMessage': text,
+    }, SetOptions(merge: true));
+
+    // Add actual message
     await FirebaseFirestore.instance
         .collection('chats')
         .doc(user.uid)

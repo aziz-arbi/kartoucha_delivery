@@ -73,6 +73,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         });
   }
 
+  String _getTypeText(String type, String lang) => t(type, lang);
+
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
@@ -100,7 +102,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           // Status banner
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFFFF5724), Color(0xFFFF8B3D)],
@@ -109,7 +111,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFF5724).withValues(alpha: 0.3),
+                  color: const Color(0xFFFF5724).withOpacity(0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -118,10 +120,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: Colors.white.withOpacity(0.2),
                   ),
                   child: Icon(
                     _iconForType(type),
@@ -134,21 +136,21 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${t('your_order', lang)} ${type.toUpperCase()}',
+                      '${t('your_order', lang)} ${_getTypeText(type, lang)}',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 2,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.2),
+                        color: statusColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -174,7 +176,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -224,7 +226,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               ),
             ),
 
-          // Details card
+          // Details cards
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -233,7 +235,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 children: [
                   _sectionTitle(t('order_details_title', lang)),
                   _detailCard([
-                    _detailRow(t('type', lang), type),
+                    _detailRow(t('type', lang), _getTypeText(type, lang)),
                     _detailRow(t('status', lang), statusText),
                     _detailRow(t('phone', lang), _order!['clientPhone'] ?? ''),
                     if (_order!.containsKey('orderDetails'))

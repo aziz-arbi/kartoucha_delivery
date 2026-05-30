@@ -8,7 +8,7 @@ import '../../utils/translations.dart';
 import '../../utils/operating_hours_utils.dart';
 import '../../utils/zone_utils.dart';
 import '../../utils/phone_validator.dart';
-import '../../utils/delivery_fee_utils.dart'; // ← new import
+import '../../utils/delivery_fee_utils.dart';
 
 class OthersOrderScreen extends StatefulWidget {
   final Position? position;
@@ -63,7 +63,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Header card
+              // Others header card
               Container(
                 height: 180,
                 width: double.infinity,
@@ -131,7 +131,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
                             labelText: t('phone', lang),
                             prefixIcon: const Icon(
                               Icons.phone,
-                              color: Color(0xFFFF5724), // Orange
+                              color: Color(0xFFFF5724), // Orange accent
                             ),
                           ),
                           validator: (v) => PhoneValidator.validate(
@@ -217,10 +217,6 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
                               if (!snapshot.hasData) {
                                 return Text(
                                   '${t('delivery_fee', lang)} : ${t('free', lang)}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
                                 );
                               }
                               final feeInfo = snapshot.data!;
@@ -234,6 +230,14 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF4A4A4A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    summary,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade600,
                                     ),
                                   ),
                                 ],
@@ -284,7 +288,7 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
 
     // 3️⃣ Calculate delivery fee
     double deliveryFee = 0.0;
-    String feeSummary = 'Gratuit';
+    String feeSummary = t('free', lang);
     if (widget.position != null) {
       final feeInfo = await DeliveryFeeUtils.calculateFee(
         widget.position!.latitude,
@@ -310,7 +314,6 @@ class _OthersOrderScreenState extends State<OthersOrderScreen>
           widget.position!.latitude,
           widget.position!.longitude,
         ),
-        // Delivery fee
         'deliveryFee': deliveryFee,
         'feeSummary': feeSummary,
       });

@@ -8,6 +8,7 @@ import '../../utils/translations.dart';
 import '../../utils/operating_hours_utils.dart';
 import '../../utils/zone_utils.dart';
 import '../../utils/phone_validator.dart';
+import '../../utils/delivery_fee_utils.dart';
 
 class UberOrderScreen extends StatefulWidget {
   final Position? position;
@@ -129,7 +130,7 @@ class _UberOrderScreenState extends State<UberOrderScreen>
                             labelText: t('phone', lang),
                             prefixIcon: const Icon(
                               Icons.phone,
-                              color: Color(0xFFFF5724), // Orange accent
+                              color: Color(0xFFFF5724),
                             ),
                           ),
                           validator: (v) => PhoneValidator.validate(
@@ -144,7 +145,7 @@ class _UberOrderScreenState extends State<UberOrderScreen>
                             labelText: t('destination', lang),
                             prefixIcon: const Icon(
                               Icons.location_on_outlined,
-                              color: Color(0xFFFF8B3D), // Neon Carrot
+                              color: Color(0xFFFF8B3D),
                             ),
                           ),
                           validator: (v) =>
@@ -165,9 +166,7 @@ class _UberOrderScreenState extends State<UberOrderScreen>
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(
-                                0xFFFF8B3D,
-                              ), // Neon Carrot
+                              backgroundColor: const Color(0xFFFF8B3D),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
@@ -176,6 +175,58 @@ class _UberOrderScreenState extends State<UberOrderScreen>
                             ),
                           ),
                         ),
+
+                        // ---------- Delivery fee display ----------
+                        const SizedBox(height: 16),
+                        const Divider(color: Colors.grey, thickness: 1),
+                        const SizedBox(height: 8),
+                        if (widget.position != null)
+                          FutureBuilder<Map<String, dynamic>>(
+                            future: DeliveryFeeUtils.calculateFee(
+                              widget.position!.latitude,
+                              widget.position!.longitude,
+                            ),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                );
+                              }
+                              if (!snapshot.hasData) {
+                                return Text(
+                                  '${t('delivery_fee', lang)} : ${t('free', lang)}',
+                                );
+                              }
+                              final feeInfo = snapshot.data!;
+                              final fee = feeInfo['fee'] as double;
+                              final summary = feeInfo['summary'] as String;
+                              return Column(
+                                children: [
+                                  Text(
+                                    '${t('delivery_fee', lang)} : ${fee.toStringAsFixed(2)} ${t('currency', lang)}',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF4A4A4A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    summary,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
                       ],
                     ),
                   ),
@@ -218,6 +269,18 @@ class _UberOrderScreenState extends State<UberOrderScreen>
       }
     }
 
+    // 3️⃣ Calculate delivery fee
+    double deliveryFee = 0.0;
+    String feeSummary = t('free', lang);
+    if (widget.position != null) {
+      final feeInfo = await DeliveryFeeUtils.calculateFee(
+        widget.position!.latitude,
+        widget.position!.longitude,
+      );
+      deliveryFee = feeInfo['fee'] as double;
+      feeSummary = feeInfo['summary'] as String;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -233,7 +296,8 @@ class _UberOrderScreenState extends State<UberOrderScreen>
           widget.position!.latitude,
           widget.position!.longitude,
         ),
-        // ⚠️ NO assignedWorkerId here
+        'deliveryFee': deliveryFee,
+        'feeSummary': feeSummary,
       });
 
       if (mounted) {

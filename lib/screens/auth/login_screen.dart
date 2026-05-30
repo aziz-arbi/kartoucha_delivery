@@ -8,8 +8,6 @@ import '../../providers/language_provider.dart';
 import '../../utils/translations.dart';
 import '../../services/auth_service.dart';
 import 'signup_screen.dart';
-import '../client/client_home.dart';
-import '../worker/worker_home.dart';
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -46,6 +44,8 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _animController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen>
             children: [
               // ----- Header with gradient -----
               Container(
-                height: 280, // slightly taller to accommodate subtitle
+                height: 280,
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -157,53 +157,47 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
                       const Spacer(),
-                      // Logo image
+                      // Logo
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withOpacity(0.2),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(50),
-                          child: Image.asset(
-                            'assets/images/logo.png', // your logo file
-                            width: 70,
-                            height: 70,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
-                                Icons.delivery_dining,
-                                size: 50,
-                                color: Colors.white,
-                              );
-                            },
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          width: 60,
+                          height: 60,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.delivery_dining,
+                            size: 50,
+                            color: Colors.white,
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // App name
+                      const Text(
+                        '3jeja',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
                         ),
                       ),
                       const SizedBox(height: 8),
                       // Tagline
                       Text(
-                        t('FRE', lang),
+                        t('tagline', lang),
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      // App title
-                      Text(
-                        t('title', lang),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
                           letterSpacing: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -295,7 +289,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     ),
                                   );
                                 },
-                                child: Text(t('forgot', lang)),
+                                child: Text(t('forgot_password', lang)),
                               ),
                             ),
                             const SizedBox(height: 20),

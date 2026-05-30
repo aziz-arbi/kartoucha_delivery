@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
 import '../../providers/language_provider.dart';
@@ -10,7 +13,6 @@ import '../../utils/translations.dart';
 import '../../services/auth_service.dart';
 import 'order_details_screen.dart';
 import 'worker_order_history.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class WorkerHomeScreen extends StatefulWidget {
   const WorkerHomeScreen({super.key});
@@ -27,6 +29,12 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
   int _previousOrderCount = 0;
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
+
+  // ---------- Distance tracking ----------
+  StreamSubscription<Position>? _distanceStream;
+  Position? _lastPosition;
+  double _sessionDistance = 0;
+  double _totalDistance = 0;
 
   @override
   void initState() {
@@ -46,6 +54,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
   @override
   void dispose() {
     _animController.dispose();
+    _distanceStream?.cancel();
     super.dispose();
   }
 
@@ -64,6 +73,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
         _workerId = doc.docs.first.id;
         _workerData = data;
         _isOnline = data['status'] == 'online';
+        _totalDistance = (data['totalDistance'] as num?)?.toDouble() ?? 0;
       });
 
       try {
@@ -87,7 +97,67 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
         .collection('workers')
         .doc(_workerId)
         .update({'status': newStatus});
+
+    if (!_isOnline) {
+      _startDistanceTracking();
+    } else {
+      _stopDistanceTracking();
+      if (_sessionDistance > 0 && _workerId != null) {
+        await FirebaseFirestore.instance
+            .collection('workers')
+            .doc(_workerId)
+            .update({'totalDistance': FieldValue.increment(_sessionDistance)});
+      }
+      _sessionDistance = 0;
+    }
+
     setState(() => _isOnline = !_isOnline);
+  }
+
+  void _startDistanceTracking() async {
+    LocationPermission perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+      if (perm != LocationPermission.denied &&
+          perm != LocationPermission.deniedForever) {
+        // ok
+      } else {
+        return;
+      }
+    }
+
+    _distanceStream =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10,
+          ),
+        ).listen((Position pos) {
+          if (_lastPosition != null) {
+            final distance =
+                const Distance().as(
+                  LengthUnit.Meter,
+                  LatLng(_lastPosition!.latitude, _lastPosition!.longitude),
+                  LatLng(pos.latitude, pos.longitude),
+                ) /
+                1000.0;
+            _sessionDistance += distance;
+            _totalDistance += distance;
+
+            if (_workerId != null && distance > 0) {
+              FirebaseFirestore.instance
+                  .collection('workers')
+                  .doc(_workerId)
+                  .update({'totalDistance': FieldValue.increment(distance)});
+            }
+          }
+          _lastPosition = pos;
+        });
+  }
+
+  void _stopDistanceTracking() {
+    _distanceStream?.cancel();
+    _lastPosition = null;
   }
 
   @override
@@ -140,7 +210,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
               ),
             ),
           ),
-          // Settings icon
           Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.settings),
@@ -196,7 +265,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
     );
   }
 
-  // ------ Settings drawer ------
+  // ------ Settings drawer (with distance) ------
   Drawer _buildSettingsDrawer(
     BuildContext context,
     String lang,
@@ -223,7 +292,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
             // Language
             ListTile(
               leading: const Icon(Icons.language, color: Color(0xFFFF5724)),
-              title: Text(' '),
+              title: Text(t('change_language', lang)),
               trailing: DropdownButton<String>(
                 value: languageProvider.locale.languageCode,
                 underline: const SizedBox(),
@@ -240,7 +309,7 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
             // Theme
             ListTile(
               leading: const Icon(Icons.dark_mode, color: Color(0xFFFF8B3D)),
-              title: Text(' '),
+              title: Text(t('theme', lang)),
               trailing: DropdownButton<String>(
                 value: _themeModeToKey(themeProvider.mode),
                 underline: const SizedBox(),
@@ -259,6 +328,15 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
                   if (value != null)
                     themeProvider.setTheme(_keyToThemeMode(value));
                 },
+              ),
+            ),
+            // Distance driven
+            ListTile(
+              leading: const Icon(Icons.speed, color: Color(0xFFFFB84D)),
+              title: Text(t('total_distance', lang)),
+              trailing: Text(
+                '${_totalDistance.toStringAsFixed(1)} km',
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
             // Online toggle
@@ -298,20 +376,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen>
               },
             ),
             const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.privacy_tip),
-              title: Text('Privacy Policy'),
-              onTap: () async {
-                final url =
-                    'https://your-deployed-url/privacy_policy.html'; // replace with your real URL
-                if (await canLaunchUrl(Uri.parse(url))) {
-                  launchUrl(
-                    Uri.parse(url),
-                    mode: LaunchMode.externalApplication,
-                  );
-                }
-              },
-            ),
           ],
         ),
       ),
