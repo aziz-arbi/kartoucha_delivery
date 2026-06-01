@@ -289,7 +289,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     ),
                                   );
                                 },
-                                child: Text(t('forgot_password', lang)),
+                                child: Text(t('forgot', lang)),
                               ),
                             ),
                             const SizedBox(height: 20),

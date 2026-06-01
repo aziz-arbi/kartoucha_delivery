@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../providers/language_provider.dart';
+import '../../utils/translations.dart';
+import 'package:provider/provider.dart';
 
 class ClientChatScreen extends StatefulWidget {
   const ClientChatScreen({super.key});
@@ -51,10 +54,11 @@ class _ClientChatScreenState extends State<ClientChatScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final lang = Provider.of<LanguageProvider>(context).locale.languageCode;
     if (user == null) return const Center(child: Text('Non connecté'));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Kartoucha Support')),
+      appBar: AppBar(title: Text(t(lang, 'help_center'))),
       body: Column(
         children: [
           Expanded(
@@ -108,8 +112,8 @@ class _ClientChatScreenState extends State<ClientChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Tapez votre message...',
+                    decoration: InputDecoration(
+                      hintText: t(lang, 'type_message'),
                       border: OutlineInputBorder(),
                     ),
                   ),

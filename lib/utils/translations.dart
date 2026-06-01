@@ -1,4 +1,19 @@
 Map<String, Map<String, String>> translations = {
+  'type_message':{
+    'fr': 'Tapez votre message',
+    'en': 'Type your message',
+    'ar': 'اكتب رسالتك',
+  },
+  'theme':{
+    'fr': 'theme',
+    'en': 'theme',
+    'ar': 'المظهر'
+  },
+  'send_demand': {
+    'fr': 'Envoyer la demande',
+    'en': 'Send request',
+    'ar': 'إرسال الطلب'
+  },
   'edit_profile': {
     'fr': 'Modifier le profil',
     'en': 'Edit Profile',
@@ -43,7 +58,7 @@ Map<String, Map<String, String>> translations = {
   'live_payment_step2_title': {
     'fr': '3jeja achète',
     'en': '3jeja purchases',
-    'ar': '3jeja تشتري',
+    'ar': 'عجاجة تشتري',
   },
   'live_payment_step2_desc': {
     'fr': 'Notre agent achète l\'article pour vous',
@@ -168,7 +183,7 @@ Map<String, Map<String, String>> translations = {
   'about_3jeja': {
     'fr': 'À propos de 3jeja',
     'en': 'About 3jeja',
-    'ar': 'عن 3jeja',
+    'ar': 'عن عجاجة',
   },
   'coming_soon': {
     'fr': 'Bientôt disponible',

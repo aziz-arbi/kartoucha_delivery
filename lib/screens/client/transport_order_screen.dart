@@ -223,24 +223,8 @@ class _TransportOrderScreenState extends State<TransportOrderScreen>
                               final fee = feeInfo['fee'] as double;
                               final summary = feeInfo['summary'] as String;
                               return Column(
-                                children: [
-                                  Text(
-                                    '${t('delivery_fee', lang)} : ${fee.toStringAsFixed(2)} ${t('currency', lang)}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF4A4A4A),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    summary,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
+                                
+                              
                               );
                             },
                           ),

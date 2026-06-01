@@ -228,14 +228,6 @@ class _ShopOrderScreenState extends State<ShopOrderScreen>
                                       color: Color(0xFF4A4A4A),
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    summary,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
                                 ],
                               );
                             },

@@ -143,7 +143,7 @@ class AccountScreen extends StatelessWidget {
               items: const [
                 DropdownMenuItem(value: 'fr', child: Text('Français')),
                 DropdownMenuItem(value: 'en', child: Text('English')),
-                DropdownMenuItem(value: 'ar', child: Text('Tounsi')),
+                DropdownMenuItem(value: 'ar', child: Text('عربي')),
               ],
               onChanged: (value) {
                 if (value != null)
@@ -176,13 +176,7 @@ class AccountScreen extends StatelessWidget {
               },
             ),
           ),
-          _menuItem(context, Icons.help_outline, t('help_center', lang), () {
-            // TODO: Help Center / FAQ
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(t('coming_soon', lang))));
-          }),
-          _menuItem(context, Icons.headset_mic, t('contact_support', lang), () {
+          _menuItem(context, Icons.headset_mic, t('help_center', lang), () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ClientChatScreen()),
@@ -191,10 +185,10 @@ class AccountScreen extends StatelessWidget {
           _menuItem(context, Icons.info_outline, t('about_3jeja', lang), () {
             showAboutDialog(
               context: context,
-              applicationName: '3jeja',
-              applicationVersion: '1.0.0',
+              applicationName: t(lang, 'title'),
+              applicationVersion: '1.0.2',
               children: [
-                const Text('3jeja Delivery – Fast • Reliable • Everywhere'),
+                Text(t(lang, 'tagline')),
               ],
             );
           }),
