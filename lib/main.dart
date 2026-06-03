@@ -272,7 +272,7 @@ class _AppStartupState extends State<AppStartup> {
   }
 }
 
-// ---------- AuthWrapper (unchanged) ----------
+// ---------- AuthWrapper (improved) ----------
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -311,18 +311,52 @@ class _AuthWrapperState extends State<AuthWrapper> {
             if (roleSnapshot.hasError) {
               return Scaffold(
                 body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, size: 60, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text('Erreur: ${roleSnapshot.error}'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => FirebaseAuth.instance.signOut(),
-                        child: const Text('Se déconnecter'),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.cloud_off,
+                          size: 60,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Impossible de vérifier votre compte.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${roleSnapshot.error}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                // Force rebuild to retry
+                                setState(() {});
+                              },
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Réessayer'),
+                            ),
+                            const SizedBox(width: 16),
+                            OutlinedButton(
+                              onPressed: () => FirebaseAuth.instance.signOut(),
+                              child: const Text('Se déconnecter'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -340,48 +374,46 @@ class _AuthWrapperState extends State<AuthWrapper> {
     );
   }
 
+  /// Returns the user's role. Creates a user document if none exists.
   Future<Map<String, dynamic>> _getUserRole(String uid, String? phone) async {
     try {
-      debugPrint('🔍 Getting role for uid: $uid, phone: $phone');
-
-      debugPrint('📡 Checking users collection...');
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .get();
-      debugPrint('📡 Users doc exists: ${userDoc.exists}');
 
       if (userDoc.exists) {
         final data = userDoc.data()!;
         data['role'] = data['role'] ?? 'client';
-        debugPrint('✅ Found in users, role: ${data['role']}');
         return data;
       }
 
+      // Not found in users – check workers
       if (phone != null && phone.isNotEmpty) {
-        debugPrint('📡 Checking workers collection for phone: $phone');
         final workerQuery = await FirebaseFirestore.instance
             .collection('workers')
             .where('phone', isEqualTo: phone)
             .limit(1)
             .get();
 
-        debugPrint('📡 Workers query returned ${workerQuery.docs.length} docs');
-
         if (workerQuery.docs.isNotEmpty) {
           final workerData = workerQuery.docs.first.data();
           workerData['role'] = 'worker';
-          debugPrint('✅ Found in workers, role: worker');
           return workerData;
         }
       }
 
-      debugPrint('❌ Not found in users or workers, signing out');
-      await FirebaseAuth.instance.signOut();
-      throw 'Compte non trouvé. Veuillez contacter l\'administrateur.';
+      // Neither client nor worker – create a fresh client document
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'phone': phone ?? '',
+        'role': 'client',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      return {'role': 'client', 'phone': phone ?? ''};
     } catch (e) {
-      debugPrint('🔥 Error in _getUserRole: $e');
-      rethrow;
+      // Let the FutureBuilder handle the error (shows retry screen)
+      throw 'Erreur réseau. Vérifiez votre connexion.';
     }
   }
 }

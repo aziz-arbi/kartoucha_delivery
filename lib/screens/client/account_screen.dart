@@ -141,9 +141,9 @@ class AccountScreen extends StatelessWidget {
               value: Provider.of<LanguageProvider>(context).locale.languageCode,
               underline: const SizedBox(),
               items: const [
-                DropdownMenuItem(value: 'fr', child: Text('Français')),
-                DropdownMenuItem(value: 'en', child: Text('English')),
-                DropdownMenuItem(value: 'ar', child: Text('عربي')),
+                DropdownMenuItem(value: 'fr', child: Text('Français🇫🇷')),
+                DropdownMenuItem(value: 'en', child: Text('English🇬🇧')),
+                DropdownMenuItem(value: 'ar', child: Text('عربي🇹🇳')),
               ],
               onChanged: (value) {
                 if (value != null)
@@ -182,13 +182,13 @@ class AccountScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const ClientChatScreen()),
             );
           }),
-          _menuItem(context, Icons.info_outline, t('about_3jeja', lang), () {
+          _menuItem(context, Icons.info_outline, 'À propos de 3jeja', () {
             showAboutDialog(
               context: context,
               applicationName: t(lang, 'title'),
               applicationVersion: '1.0.2',
               children: [
-                Text(t(lang, 'tagline')),
+                Text('Rapide • Fiable • Partout'),
               ],
             );
           }),

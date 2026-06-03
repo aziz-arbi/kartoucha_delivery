@@ -1,4 +1,11 @@
 Map<String, Map<String, String>> translations = {
+  'light': {'fr': 'Clair', 'en': 'Light', 'ar': 'فاتح'},
+  'dark': {'fr': 'Sombre', 'en': 'Dark', 'ar': 'داكن'},
+  'system_default': {
+    'fr': 'Système',
+    'en': 'System default',
+    'ar': 'النظام الافتراضي',
+  },
   'type_message':{
     'fr': 'Tapez votre message',
     'en': 'Type your message',
