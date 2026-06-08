@@ -221,12 +221,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 children: [
                   TextFormField(
                     controller: _phoneController,
-                    decoration:  InputDecoration(labelText: t(lang, "phone")),
+                    decoration:  InputDecoration(labelText: t("phone", lang)),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _submitPhone,
-                    child: Text(t(lang, 'send_demand')),
+                    child: Text(t('send_demand', lang)),
                   ),
                 ],
               ),

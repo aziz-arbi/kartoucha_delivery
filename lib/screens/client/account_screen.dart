@@ -13,6 +13,7 @@ import 'saved_addresses_screen.dart';
 import 'referral_screen.dart';
 import 'chat_screen.dart';
 import 'live_payment_screen.dart';
+import 'about_screen.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -63,7 +64,7 @@ class AccountScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      name.isNotEmpty ? name : '3jeja User',
+                      name.isNotEmpty ? name : 'Agareb Delivery User',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -182,14 +183,10 @@ class AccountScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const ClientChatScreen()),
             );
           }),
-          _menuItem(context, Icons.info_outline, 'À propos de 3jeja', () {
-            showAboutDialog(
-              context: context,
-              applicationName: t(lang, 'title'),
-              applicationVersion: '1.0.2',
-              children: [
-                Text('Rapide • Fiable • Partout'),
-              ],
+          _menuItem(context, Icons.info_outline, t('about_3gareb_Delivery', lang), () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AboutScreen()),
             );
           }),
           const SizedBox(height: 16),

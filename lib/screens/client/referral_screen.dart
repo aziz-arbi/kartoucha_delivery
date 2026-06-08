@@ -55,10 +55,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   void _shareReferral() {
     final message =
-        'Try 3jeja Delivery – fast, reliable delivery in Agareb! '
+        'Try Agareb Delivery – fast, reliable delivery in Agareb! '
         'Use my invite code "$_referralCode" to get a discount on your first order. '
         'Download the app now!';
-    Share.share(message, subject: 'Join 3jeja Delivery!');
+    Share.share(message, subject: 'Join Agareb Delivery!');
   }
 
   @override

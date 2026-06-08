@@ -14,7 +14,7 @@
         </intent>
     </queries>
     <application
-        android:label="3jaja"
+        android:label="Agareb Delivery"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

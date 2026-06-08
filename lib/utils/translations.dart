@@ -1,4 +1,96 @@
 Map<String, Map<String, String>> translations = {
+  'about_agareb': {
+    'fr': 'À propos d\'Agareb Delivery',
+    'en': 'About Agareb Delivery',
+    'ar': 'عن عقارب للتوصيل',
+  },
+  'what_is_agareb': {
+    'fr': 'Qu\'est-ce qu\'Agareb Delivery ?',
+    'en': 'What is Agareb Delivery?',
+    'ar': 'ما هو عقارب للتوصيل؟',
+  },
+  'about_description': {
+    'fr':
+        'Agareb Delivery est une plateforme de livraison locale basée à Agareb, Tunisie. Nous connectons les clients avec des livreurs pour la nourriture, les courses, les transports, et plus encore. Notre service unique "Paiement à la livraison" vous permet de commander sans paiement en ligne – vous payez uniquement à la réception.',
+    'en':
+        'Agareb Delivery is a local delivery platform based in Agareb, Tunisia. We connect customers with couriers for food, shopping, rides, transport, and more. Our unique "Live Payment" service lets you order without online payment – you pay only upon delivery.',
+    'ar':
+        'عقارب للتوصيل هي منصة توصيل محلية مقرها عقارب، تونس. نربط العملاء مع السائقين للطعام والتسوق والمواصلات والنقل والمزيد. خدمتنا الفريدة "الدفع عند الاستلام" تتيح لك الطلب دون دفع عبر الإنترنت – تدفع فقط عند الاستلام.',
+  },
+  'live_payment_how': {
+    'fr': 'Comment fonctionne le paiement à la livraison ?',
+    'en': 'How does Live Payment work?',
+    'ar': 'كيف يعمل الدفع عند الاستلام؟',
+  },
+  'live_payment_desc': {
+    'fr':
+        'Vous commandez via l\'application, notre équipe prépare votre commande (achète l\'article si nécessaire), le livreur vous l\'apporte, et vous payez en espèces directement au livreur. Aucune carte bancaire requise.',
+    'en':
+        'You order via the app, our team prepares your order (buys the item if needed), the courier brings it to you, and you pay cash directly to the courier. No credit card required.',
+    'ar':
+        'تطلب عبر التطبيق، يقوم فريقنا بتجهيز طلبك (شراء السلعة إذا لزم الأمر)، يقوم السائق بتوصيلها إليك، وتدفع نقداً مباشرة للسائق. لا حاجة لبطاقة ائتمان.',
+  },
+  'coverage': {
+    'fr': 'Zone de livraison',
+    'en': 'Delivery area',
+    'ar': 'منطقة التوصيل',
+  },
+  'coverage_agareb': {
+    'fr': 'Actuellement disponible à Agareb et ses environs.',
+    'en': 'Currently available in Agareb and surrounding areas.',
+    'ar': 'متاح حالياً في عقارب والمناطق المجاورة.',
+  },
+  'coverage_expanding': {
+    'fr': 'Nous nous étendons bientôt à d\'autres villes !',
+    'en': 'Expanding to more cities soon!',
+    'ar': 'سوف نتوسع إلى مدن أخرى قريباً!',
+  },
+  'key_features': {
+    'fr': 'Fonctionnalités clés',
+    'en': 'Key features',
+    'ar': 'الميزات الرئيسية',
+  },
+  'feature_food': {
+    'fr': 'Commandes de nourriture (restaurants partenaires)',
+    'en': 'Food orders (partner restaurants)',
+    'ar': 'طلبات الطعام (مطاعم شريكة)',
+  },
+  'feature_uber': {
+    'fr': 'Courses en taxi (Uber-like)',
+    'en': 'Taxi rides (Uber-like)',
+    'ar': 'رحلات التاكسي (مشابه لأوبر)',
+  },
+  'feature_shop': {
+    'fr': 'Courses en magasin (liste de courses)',
+    'en': 'Shopping (grocery list)',
+    'ar': 'التسوق من المتجر (قائمة مشتريات)',
+  },
+  'feature_transport': {
+    'fr': 'Transport de colis / objets',
+    'en': 'Parcel / item transport',
+    'ar': 'نقل الطرود / الأشياء',
+  },
+  'feature_others': {
+    'fr': 'Demandes personnalisées',
+    'en': 'Custom requests',
+    'ar': 'طلبات مخصصة',
+  },
+  'feature_tracking': {
+    'fr': 'Suivi en temps réel du livreur',
+    'en': 'Real-time courier tracking',
+    'ar': 'تتبع السائق في الوقت الفعلي',
+  },
+  'feature_chat': {
+    'fr': 'Chat avec l\'administrateur',
+    'en': 'Chat with admin',
+    'ar': 'الدردشة مع المسؤول',
+  },
+  'feature_referral': {
+    'fr': 'Programme de parrainage (code invite)',
+    'en': 'Referral program (invite code)',
+    'ar': 'برنامج الإحالة (رمز الدعوة)',
+  },
+  'version': {'fr': 'Version', 'en': 'Version', 'ar': 'الإصدار'},
   'light': {'fr': 'Clair', 'en': 'Light', 'ar': 'فاتح'},
   'dark': {'fr': 'Sombre', 'en': 'Dark', 'ar': 'داكن'},
   'system_default': {
@@ -63,9 +155,9 @@ Map<String, Map<String, String>> translations = {
     'ar': 'اختر ما تريد في التطبيق',
   },
   'live_payment_step2_title': {
-    'fr': '3jeja achète',
-    'en': '3jeja purchases',
-    'ar': 'عجاجة تشتري',
+    'fr': '3gareb Delivery achète',
+    'en': '3gareb Delivery purchases',
+    'ar': 'عقارب للتوصيل تشتري',
   },
   'live_payment_step2_desc': {
     'fr': 'Notre agent achète l\'article pour vous',
@@ -187,10 +279,10 @@ Map<String, Map<String, String>> translations = {
     'ar': 'دعوة الأصدقاء',
   },
   'support': {'fr': 'Support', 'en': 'Support', 'ar': 'الدعم'},
-  'about_3jeja': {
-    'fr': 'À propos de 3jeja',
-    'en': 'About 3jeja',
-    'ar': 'عن عجاجة',
+  'about_3gareb_Delivery': {
+    'fr': 'À propos de 3gareb Delivery',
+    'en': 'About 3gareb Delivery',
+    'ar': 'عن عقارب للتوصيل',
   },
   'coming_soon': {
     'fr': 'Bientôt disponible',
@@ -510,8 +602,8 @@ Map<String, Map<String, String>> translations = {
   'others': {'fr': 'Autres', 'en': 'Others', 'ar': 'أخرى'},
   'order': {'fr': 'Commander', 'en': 'Order', 'ar': 'طلب'},
   'offers': {'fr': 'Offres', 'en': 'Offers', 'ar': 'عروض'},
-  'worker_title': {'fr': '3jaja - Livreur', 'en': '3jaja - Worker', 'ar': 'عجاجة - عامل'},
-  'title':{'fr': '3jaja - Delivery', 'en': '3jaja - Delivery', 'ar': "عجاجة - لتوصيل"},
+  'worker_title': {'fr': 'Agareb Delivery - Livreur', 'en': 'Agareb Delivery - Worker', 'ar': 'عقارب - لتوصيل - عامل'},
+  'title':{'fr': 'Agareb - Delivery', 'en': 'Agareb - Delivery', 'ar': "عقارب - لتوصيل"},
   'offline_message': {'fr': 'Vous êtes hors ligne', 'en': 'You are offline', 'ar': 'أنت غير متصل'},
   'activate_switch': {'fr': 'Activez le bouton pour recevoir des commandes', 'en': 'Activate the switch to receive orders', 'ar': 'قم بتفعيل الزر لاستلام الطلبات'},
   'accept_order': {'fr': 'Accepter la commande', 'en': 'Accept Order', 'ar': 'قبول الطلب'},

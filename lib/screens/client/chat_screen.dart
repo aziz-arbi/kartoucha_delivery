@@ -58,7 +58,7 @@ class _ClientChatScreenState extends State<ClientChatScreen> {
     if (user == null) return const Center(child: Text('Non connecté'));
 
     return Scaffold(
-      appBar: AppBar(title: Text(t(lang, 'help_center'))),
+      appBar: AppBar(title: Text(t('help_center', lang ))),
       body: Column(
         children: [
           Expanded(
@@ -113,7 +113,7 @@ class _ClientChatScreenState extends State<ClientChatScreen> {
                   child: TextField(
                     controller: _messageController,
                     decoration: InputDecoration(
-                      hintText: t(lang, 'type_message'),
+                      hintText: t('type_message', lang ),
                       border: OutlineInputBorder(),
                     ),
                   ),

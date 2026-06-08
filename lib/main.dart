@@ -195,7 +195,7 @@ class _3jejaApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-      title: '3jeja',
+      title: 'Agareb delivery',
       debugShowCheckedModeBanner: false,
       locale: languageProvider.locale,
       theme: lightTheme,
@@ -281,6 +281,10 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
+  int _retryCount = 0;
+  static const int _maxRetries = 5;
+  static const Duration _retryDelay = Duration(seconds: 2);
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -297,10 +301,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
 
         final user = snapshot.data!;
-        final phone = user.email?.replaceAll('@kartoucha.com', '');
+        final phone = _extractPhone(user);
 
         return FutureBuilder<Map<String, dynamic>?>(
-          future: _getUserRole(user.uid, phone),
+          key: ValueKey('role_$_retryCount'),
+          future: _getUserRoleWithRetry(user.uid, phone),
           builder: (context, roleSnapshot) {
             if (roleSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
@@ -309,6 +314,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
             }
 
             if (roleSnapshot.hasError) {
+              // ✅ NO logout button – only retry
               return Scaffold(
                 body: Center(
                   child: Padding(
@@ -319,11 +325,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
                         const Icon(
                           Icons.cloud_off,
                           size: 60,
-                          color: Colors.red,
+                          color: Colors.grey,
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'Impossible de vérifier votre compte.',
+                          'Connexion au serveur impossible.\nVérifiez votre connexion internet.',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 16),
                         ),
@@ -331,29 +337,18 @@ class _AuthWrapperState extends State<AuthWrapper> {
                         Text(
                           '${roleSnapshot.error}',
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: Colors.grey,
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                // Force rebuild to retry
-                                setState(() {});
-                              },
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Réessayer'),
-                            ),
-                            const SizedBox(width: 16),
-                            OutlinedButton(
-                              onPressed: () => FirebaseAuth.instance.signOut(),
-                              child: const Text('Se déconnecter'),
-                            ),
-                          ],
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() => _retryCount++);
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Réessayer'),
                         ),
                       ],
                     ),
@@ -363,57 +358,76 @@ class _AuthWrapperState extends State<AuthWrapper> {
             }
 
             final role = roleSnapshot.data?['role'] ?? 'client';
-            final screen = role == 'worker'
+            return role == 'worker'
                 ? const WorkerHomeScreen()
                 : const ClientHomeScreen();
-
-            return screen;
           },
         );
       },
     );
   }
 
-  /// Returns the user's role. Creates a user document if none exists.
-  Future<Map<String, dynamic>> _getUserRole(String uid, String? phone) async {
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-
-      if (userDoc.exists) {
-        final data = userDoc.data()!;
-        data['role'] = data['role'] ?? 'client';
-        return data;
-      }
-
-      // Not found in users – check workers
-      if (phone != null && phone.isNotEmpty) {
-        final workerQuery = await FirebaseFirestore.instance
-            .collection('workers')
-            .where('phone', isEqualTo: phone)
-            .limit(1)
-            .get();
-
-        if (workerQuery.docs.isNotEmpty) {
-          final workerData = workerQuery.docs.first.data();
-          workerData['role'] = 'worker';
-          return workerData;
-        }
-      }
-
-      // Neither client nor worker – create a fresh client document
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'phone': phone ?? '',
-        'role': 'client',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      return {'role': 'client', 'phone': phone ?? ''};
-    } catch (e) {
-      // Let the FutureBuilder handle the error (shows retry screen)
-      throw 'Erreur réseau. Vérifiez votre connexion.';
+  String? _extractPhone(User user) {
+    // Phone auth (if you ever switch to phone auth)
+    if (user.phoneNumber != null && user.phoneNumber!.isNotEmpty) {
+      return user.phoneNumber;
     }
+    // Your current email-based phone storage
+    if (user.email != null && user.email!.contains('@kartoucha.com')) {
+      return user.email!.replaceAll('@kartoucha.com', '');
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>> _getUserRoleWithRetry(
+    String uid,
+    String? phone,
+  ) async {
+    int attempt = 0;
+    while (attempt < _maxRetries) {
+      try {
+        return await _getUserRole(uid, phone);
+      } catch (e) {
+        attempt++;
+        if (attempt == _maxRetries) rethrow;
+        await Future.delayed(_retryDelay * attempt);
+      }
+    }
+    throw 'Impossible de récupérer le rôle après $_maxRetries tentatives.';
+  }
+
+  Future<Map<String, dynamic>> _getUserRole(String uid, String? phone) async {
+    // 1. Check users collection
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    if (userDoc.exists) {
+      final data = userDoc.data()!;
+      data['role'] = data['role'] ?? 'client';
+      return data;
+    }
+
+    // 2. Check workers by phone
+    if (phone != null && phone.isNotEmpty) {
+      final workerQuery = await FirebaseFirestore.instance
+          .collection('workers')
+          .where('phone', isEqualTo: phone)
+          .limit(1)
+          .get();
+      if (workerQuery.docs.isNotEmpty) {
+        final workerData = workerQuery.docs.first.data();
+        workerData['role'] = 'worker';
+        return workerData;
+      }
+    }
+
+    // 3. Create a fresh client document
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'phone': phone ?? '',
+      'role': 'client',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return {'role': 'client', 'phone': phone ?? ''};
   }
 }

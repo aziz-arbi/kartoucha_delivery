@@ -193,7 +193,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('3jeja'),
+        title: Text(t('title', lang)),
         actions: [
           // Only notification bell – no settings icon
           IconButton(

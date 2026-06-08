@@ -177,8 +177,8 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                       const SizedBox(height: 16),
                       // App name
-                      const Text(
-                        '3jeja',
+                      Text(
+                        t('title', lang),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 30,

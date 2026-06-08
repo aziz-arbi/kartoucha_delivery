@@ -17,7 +17,7 @@ class UpdateService {
       final requiredVersion = data['minVersion'] as String? ?? '0.0.0';
       final updateUrl =
           data['updateUrl'] as String? ??
-          'https://play.google.com/store/apps/details?id=com.yourcompany.kartoucha';
+          'https://play.google.com/store/apps/details?id=com.kartoucha.delivery&hl=en';
 
       // Get current app version
       final packageInfo = await PackageInfo.fromPlatform();
@@ -39,9 +39,9 @@ class UpdateService {
           .doc('app')
           .get();
       return doc.data()?['updateUrl'] as String? ??
-          'https://play.google.com/store/apps/details?id=com.yourcompany.kartoucha';
+          'https://play.google.com/store/apps/details?id=com.kartoucha.delivery&hl=en';
     } catch (_) {
-      return 'https://play.google.com/store/apps/details?id=com.yourcompany.kartoucha';
+      return 'https://play.google.com/store/apps/details?id=com.kartoucha.delivery&hl=en';
     }
   }
 
