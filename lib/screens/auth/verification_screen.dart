@@ -20,10 +20,9 @@ class _VerificationScreenState extends State<VerificationScreen>
     with SingleTickerProviderStateMixin {
   final _codeController = TextEditingController();
   bool _isLoading = false;
-  String? _pendingDocId;
-  Stream<QuerySnapshot>? _approvalStream;
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
+  String? _debugInfo;
 
   @override
   void initState() {
@@ -37,7 +36,6 @@ class _VerificationScreenState extends State<VerificationScreen>
       curve: Curves.elasticOut,
     );
     _animController.forward();
-    _setupApprovalListener();
   }
 
   @override
@@ -45,55 +43,6 @@ class _VerificationScreenState extends State<VerificationScreen>
     _animController.dispose();
     _codeController.dispose();
     super.dispose();
-  }
-
-  void _setupApprovalListener() {
-    _approvalStream = FirebaseFirestore.instance
-        .collection('pending_users')
-        .where('phone', isEqualTo: widget.phone)
-        .snapshots();
-
-    _approvalStream!.listen((snapshot) {
-      if (snapshot.docs.isEmpty) return;
-
-      final doc = snapshot.docs.first;
-      final data = doc.data() as Map<String, dynamic>?;
-
-      if (data == null) return;
-
-      // Denied
-      if (data['denied'] == true) {
-        final reason = data['denialReason'] ?? 'Votre demande a été refusée.';
-        if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Compte refusé'),
-              content: Text(reason),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    doc.reference.delete();
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
-        }
-        return;
-      }
-
-      // Approved
-      if (data['approved'] == true) {
-        setState(() {
-          _pendingDocId = doc.id;
-        });
-      }
-    });
   }
 
   @override
@@ -111,7 +60,7 @@ class _VerificationScreenState extends State<VerificationScreen>
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Header card
+              // Header card (same as before)
               Container(
                 height: 180,
                 width: double.infinity,
@@ -211,7 +160,19 @@ class _VerificationScreenState extends State<VerificationScreen>
                         ),
                         maxLength: 6,
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 16),
+                      if (_debugInfo != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            _debugInfo!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         height: 55,
@@ -255,63 +216,113 @@ class _VerificationScreenState extends State<VerificationScreen>
       return;
     }
 
-    if (_pendingDocId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Votre compte n\'a pas encore été approuvé.'),
-        ),
-      );
-      return;
-    }
+    setState(() {
+      _isLoading = true;
+      _debugInfo = null;
+    });
 
-    setState(() => _isLoading = true);
     try {
-      final doc = await FirebaseFirestore.instance
+      // Normalize phone for search (remove spaces, keep digits and +)
+      final rawPhone = widget.phone.trim();
+      final normalizedPhone = rawPhone.replaceAll(RegExp(r'[^\d+]'), '');
+
+      setState(() {
+        _debugInfo = 'Recherche pour $normalizedPhone...';
+      });
+
+      // Query pending_users with multiple phone variations
+      QuerySnapshot query = await FirebaseFirestore.instance
           .collection('pending_users')
-          .doc(_pendingDocId)
+          .where('phone', isEqualTo: rawPhone)
+          .where('approved', isEqualTo: true)
+          .where('denied', isEqualTo: false)
+          .limit(1)
           .get();
 
-      if (!doc.exists) throw 'Document introuvable';
+      if (query.docs.isEmpty) {
+        // Try normalized version
+        query = await FirebaseFirestore.instance
+            .collection('pending_users')
+            .where('phone', isEqualTo: normalizedPhone)
+            .where('approved', isEqualTo: true)
+            .where('denied', isEqualTo: false)
+            .limit(1)
+            .get();
+      }
 
-      final data = doc.data() as Map<String, dynamic>?;
-      if (data == null) throw 'Données introuvables';
+      if (query.docs.isEmpty) {
+        // Try without country code (if phone starts with +216, remove it)
+        String withoutCountry = normalizedPhone;
+        if (normalizedPhone.startsWith('+216')) {
+          withoutCountry = normalizedPhone.substring(4);
+          query = await FirebaseFirestore.instance
+              .collection('pending_users')
+              .where('phone', isEqualTo: withoutCountry)
+              .where('approved', isEqualTo: true)
+              .where('denied', isEqualTo: false)
+              .limit(1)
+              .get();
+        }
+      }
 
-      final storedCode = data['verificationCode']?.toString() ?? '';
+      if (query.docs.isEmpty) {
+        throw 'Aucun compte approuvé trouvé pour ${widget.phone}. Contactez l\'administrateur.';
+      }
 
-      if (storedCode == enteredCode) {
-        await AuthService().createApprovedUser(
-          _pendingDocId!,
-          data['name'],
-          data['phone'],
-          data['password'],
+      final doc = query.docs.first;
+      final data = doc.data() as Map<String, dynamic>;
+
+      final storedCodeRaw = data['verificationCode'];
+      final storedCode = storedCodeRaw?.toString().trim() ?? '';
+      final enteredCodeClean = enteredCode.trim();
+
+      setState(() {
+        _debugInfo = 'Stored: "$storedCode" | Entered: "$enteredCodeClean"';
+      });
+
+      if (storedCode.isEmpty) {
+        throw 'Aucun code de vérification généré. Demandez à l\'admin de régénérer le code.';
+      }
+
+      if (storedCode != enteredCodeClean) {
+        throw 'Code incorrect. Vérifiez le code envoyé par WhatsApp.';
+      }
+
+      // ✅ Code matches – create user account
+      await AuthService().createApprovedUser(
+        doc.id,
+        data['name'],
+        data['phone'],
+        data['password'],
+      );
+
+      await doc.reference.delete();
+
+      // Save FCM token
+      try {
+        final token = await FirebaseMessaging.instance.getToken();
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (token != null && currentUser != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser.uid)
+              .update({'fcmToken': token});
+        }
+      } catch (e) {
+        debugPrint('FCM token save failed: $e');
+      }
+
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const ClientHomeScreen()),
+          (route) => false,
         );
-
-        await doc.reference.delete();
-
-        try {
-          final token = await FirebaseMessaging.instance.getToken();
-          final currentUser = FirebaseAuth.instance.currentUser;
-          if (token != null && currentUser != null) {
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(currentUser.uid)
-                .update({'fcmToken': token});
-          }
-        } catch (e) {
-          debugPrint('Could not save FCM token: $e');
-        }
-
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const ClientHomeScreen()),
-            (route) => false,
-          );
-        }
-      } else {
-        throw 'Code incorrect';
       }
     } catch (e) {
+      setState(() {
+        _debugInfo = null;
+      });
       if (mounted) {
         ScaffoldMessenger.of(
           context,
