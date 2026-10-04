@@ -11,14 +11,14 @@ Flow:
 6. Flutter creates the Firebase Auth account and user profile.
 
 ## Requirements
-- Node.js 18+
+- Node.js 22+
 - Firebase service-account JSON with Firestore access
 - Dedicated WhatsApp account/number for Agareb Delivery
 - Persistent server/VM
 - Chromium/Puppeteer support
 
 ## Run locally
-Set FIREBASE_SERVICE_ACCOUNT to the absolute path of the service-account JSON, then run npm install and npm start.
+Set FIREBASE_SERVICE_ACCOUNT to the absolute path of the Firebase service-account JSON, then run npm install and npm start.
 
 The first startup prints a WhatsApp QR code. Scan it from the WhatsApp account that will send verification messages. LocalAuth persists the session in .wwebjs_auth/.
 
