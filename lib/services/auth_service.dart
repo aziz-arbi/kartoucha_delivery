@@ -26,7 +26,8 @@ class AuthService {
     }
   }
 
-  // Register new user (pending approval)
+  // Register a new user. Verification is automatic: the WhatsApp
+  // verification service generates and sends the 6-digit code.
   Future<void> registerUser({
     required String name,
     required String phone,
@@ -37,12 +38,21 @@ class AuthService {
       'phone': phone,
       'password': password,
       'createdAt': FieldValue.serverTimestamp(),
-      'approved': false,
+
+      // Kept for compatibility with the existing admin dashboard/schema.
+      // No manual admin approval is required anymore.
+      'approved': true,
       'denied': false,
+
+      // The WhatsApp service watches this state and sends the code.
+      'verificationStatus': 'pending',
+      'verificationCode': null,
+      'verificationSentAt': null,
+      'verificationExpiresAt': null,
     });
   }
 
-  // After admin approval, create actual Firebase Auth account
+  // After verification, create the actual Firebase Auth account
   Future<void> createApprovedUser(String userId, String name, String phone, String password) async {
     String email = '$phone@kartoucha.com';
     try {
