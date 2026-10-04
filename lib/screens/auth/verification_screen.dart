@@ -260,6 +260,11 @@ class _VerificationScreenState extends State<VerificationScreen>
         throw 'Le code de vérification est en cours d\'envoi sur WhatsApp. Réessayez dans quelques secondes.';
       }
 
+      final expiresAt = data['verificationExpiresAt'];
+      if (expiresAt is Timestamp && expiresAt.toDate().isBefore(DateTime.now())) {
+        throw 'Ce code a expiré. Demandez un nouveau code.';
+      }
+
       if (storedCode != enteredCode) {
         throw 'Code incorrect. Vérifiez le code envoyé par WhatsApp.';
       }
