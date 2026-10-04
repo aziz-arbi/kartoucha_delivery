@@ -22,7 +22,6 @@ class _VerificationScreenState extends State<VerificationScreen>
   bool _isLoading = false;
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
-  String? _debugInfo;
 
   @override
   void initState() {
@@ -60,7 +59,6 @@ class _VerificationScreenState extends State<VerificationScreen>
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Header card (same as before)
               Container(
                 height: 180,
                 width: double.infinity,
@@ -105,7 +103,7 @@ class _VerificationScreenState extends State<VerificationScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${widget.phone}',
+                      widget.phone,
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 16,
@@ -116,8 +114,6 @@ class _VerificationScreenState extends State<VerificationScreen>
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Form card
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
@@ -161,18 +157,6 @@ class _VerificationScreenState extends State<VerificationScreen>
                         maxLength: 6,
                       ),
                       const SizedBox(height: 16),
-                      if (_debugInfo != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            _debugInfo!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.orange,
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         height: 55,
@@ -209,6 +193,7 @@ class _VerificationScreenState extends State<VerificationScreen>
 
   Future<void> _verifyCode() async {
     final enteredCode = _codeController.text.trim();
+
     if (enteredCode.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -216,53 +201,46 @@ class _VerificationScreenState extends State<VerificationScreen>
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _debugInfo = null;
-    });
+    if (enteredCode.length != 6) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+        const SnackBar(content: Text('Le code doit contenir 6 chiffres')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
 
     try {
-      // Normalize phone for search (remove spaces, keep digits and +)
       final rawPhone = widget.phone.trim();
       final normalizedPhone = rawPhone.replaceAll(RegExp(r'[^\d+]'), '');
 
-      setState(() {
-        _debugInfo = 'Recherche pour $normalizedPhone...';
-      });
+      final phoneVariants = <String>{
+        rawPhone,
+        normalizedPhone,
+        if (normalizedPhone.startsWith('+216'))
+          normalizedPhone.substring(4),
+        if (normalizedPhone.startsWith('216') && normalizedPhone.length > 8)
+          normalizedPhone.substring(3),
+      }.where((phone) => phone.isNotEmpty).toList();
 
-      // Query pending_users with multiple phone variations
       QuerySnapshot query = await FirebaseFirestore.instance
           .collection('pending_users')
-          .where('phone', isEqualTo: rawPhone)
+          .where('phone', isEqualTo: phoneVariants.first)
           .where('approved', isEqualTo: true)
-          .where('denied', isEqualTo: false)
           .limit(1)
           .get();
 
-      if (query.docs.isEmpty) {
-        // Try normalized version
+      for (final phone in phoneVariants.skip(1)) {
+        if (query.docs.isNotEmpty) break;
+
         query = await FirebaseFirestore.instance
             .collection('pending_users')
-            .where('phone', isEqualTo: normalizedPhone)
+            .where('phone', isEqualTo: phone)
             .where('approved', isEqualTo: true)
-            .where('denied', isEqualTo: false)
             .limit(1)
             .get();
-      }
-
-      if (query.docs.isEmpty) {
-        // Try without country code (if phone starts with +216, remove it)
-        String withoutCountry = normalizedPhone;
-        if (normalizedPhone.startsWith('+216')) {
-          withoutCountry = normalizedPhone.substring(4);
-          query = await FirebaseFirestore.instance
-              .collection('pending_users')
-              .where('phone', isEqualTo: withoutCountry)
-              .where('approved', isEqualTo: true)
-              .where('denied', isEqualTo: false)
-              .limit(1)
-              .get();
-        }
       }
 
       if (query.docs.isEmpty) {
@@ -272,23 +250,20 @@ class _VerificationScreenState extends State<VerificationScreen>
       final doc = query.docs.first;
       final data = doc.data() as Map<String, dynamic>;
 
-      final storedCodeRaw = data['verificationCode'];
-      final storedCode = storedCodeRaw?.toString().trim() ?? '';
-      final enteredCodeClean = enteredCode.trim();
+      if (data['denied'] == true) {
+        throw 'Cette demande a été refusée. Contactez l\'administrateur.';
+      }
 
-      setState(() {
-        _debugInfo = 'Stored: "$storedCode" | Entered: "$enteredCodeClean"';
-      });
+      final storedCode = data['verificationCode']?.toString().trim() ?? '';
 
       if (storedCode.isEmpty) {
         throw 'Aucun code de vérification généré. Demandez à l\'admin de régénérer le code.';
       }
 
-      if (storedCode != enteredCodeClean) {
+      if (storedCode != enteredCode) {
         throw 'Code incorrect. Vérifiez le code envoyé par WhatsApp.';
       }
 
-      // ✅ Code matches – create user account
       await AuthService().createApprovedUser(
         doc.id,
         data['name'],
@@ -298,7 +273,6 @@ class _VerificationScreenState extends State<VerificationScreen>
 
       await doc.reference.delete();
 
-      // Save FCM token
       try {
         final token = await FirebaseMessaging.instance.getToken();
         final currentUser = FirebaseAuth.instance.currentUser;
@@ -320,9 +294,6 @@ class _VerificationScreenState extends State<VerificationScreen>
         );
       }
     } catch (e) {
-      setState(() {
-        _debugInfo = null;
-      });
       if (mounted) {
         ScaffoldMessenger.of(
           context,
