@@ -251,13 +251,13 @@ class _VerificationScreenState extends State<VerificationScreen>
       final data = doc.data() as Map<String, dynamic>;
 
       if (data['denied'] == true) {
-        throw 'Cette demande a été refusée. Contactez l\'administrateur.';
+        throw 'Cette demande a été refusée.';
       }
 
       final storedCode = data['verificationCode']?.toString().trim() ?? '';
 
       if (storedCode.isEmpty) {
-        throw 'Aucun code de vérification généré. Demandez à l\'admin de régénérer le code.';
+        throw 'Le code de vérification est en cours d\'envoi sur WhatsApp. Réessayez dans quelques secondes.';
       }
 
       if (storedCode != enteredCode) {
